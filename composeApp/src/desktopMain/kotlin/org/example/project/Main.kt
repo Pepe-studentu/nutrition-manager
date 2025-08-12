@@ -1,0 +1,22 @@
+package org.example.project
+
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
+import org.example.project.model.Model
+import org.example.project.view.App
+import org.example.project.view.theme.AppTheme
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+fun main() = application {
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "KotlinProjectTest",
+    ) {
+        Model.loadIngredients()
+        Model.loadMeals()
+        Model.loadMenus()
+        AppTheme { App() }
+    }
+}
