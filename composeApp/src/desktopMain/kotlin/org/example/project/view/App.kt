@@ -10,8 +10,6 @@ import androidx.compose.ui.unit.dp
 import org.example.project.model.Model
 import org.example.project.model.Screen
 import org.example.project.view.theme.AppTheme
-import view.IngredientsScreen
-
 @Composable
 fun App() {
     AppTheme {
@@ -33,10 +31,8 @@ fun App() {
                     )
             ) {
                 when (Model.currentScreen) {
-                    Screen.Ingredients -> IngredientsScreen()
-                    Screen.Meals -> MealScreen()
-                    Screen.Menus -> MenuScreen()
-                    Screen.MultiMenus -> MenuScreen() // Placeholder for MultiMenus
+                    Screen.Foods -> FoodsScreen()
+                    Screen.Menus -> MultiDayMenusScreen()
                 }
             }
         }

@@ -11,8 +11,6 @@ import kotlinprojecttest.composeapp.generated.resources.triangle
 import org.jetbrains.compose.resources.DrawableResource
 
 enum class Screen(val icon: DrawableResource, val filledIcon: DrawableResource) {
-    Ingredients(Res.drawable.circle, Res.drawable.circle),
-    Meals(Res.drawable.triangle, Res.drawable.triangle),
-    Menus(Res.drawable.square, Res.drawable.square),
-    MultiMenus(icon = Res.drawable.hexagon, Res.drawable.hexagon) // change this one
+    Foods(Res.drawable.circle, Res.drawable.circle),
+    Menus(Res.drawable.square, Res.drawable.square)
 }

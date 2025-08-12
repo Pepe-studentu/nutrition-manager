@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew:*)",
+      "Bash(set GRADLE_OPTS=-Xmx1024m)"
+    ],
+    "deny": []
+  }
+}

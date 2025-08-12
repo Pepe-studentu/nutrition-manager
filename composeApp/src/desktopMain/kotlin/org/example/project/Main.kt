@@ -14,9 +14,9 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "KotlinProjectTest",
     ) {
-        Model.loadIngredients()
+        Model.loadFoods()
         Model.loadMeals()
-        Model.loadMenus()
+        Model.loadMultiDayMenus()
         AppTheme { App() }
     }
 }

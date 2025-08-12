@@ -78,23 +78,4 @@ The application uses a centralized Model singleton pattern rather than ViewModel
 - JSON data files stored at project root
 
 ## Planning
- - the 8 categories are: diary, meat&fish, eggs, veggies, cereals&legumes,
-sugars, fats, drinks
- - yes, recursive macros for compound foods
- - yes, for frequency counting, only within menus
- - the dialog will be the add meal dialog, which is already implemented (albeit
-in a very not polished form, and it needs help with the ingredient -> food 
-replacement. There is a selection part to the left and a quantity input 
-to the right, where the macros for the whole food are visible)
- - no, the content of the JSON storage is there because I needed testing, so
-no migration is needed
 
-### UI restructuring
-key thing: keep it minimal. That is, no need for a polished look, not at all.
-In this stage of the development, I want a functional app. A good looking one
-has a lot of code, in my opinion, and risks being changed a lot. For example,
-the ui code I have now focuses more on the looks than needed. This is why, please
-keep the ui code compact and clean. Later, it will be polished after we have
-the app working as intended. 
-
-For now, let's focus on these parts.

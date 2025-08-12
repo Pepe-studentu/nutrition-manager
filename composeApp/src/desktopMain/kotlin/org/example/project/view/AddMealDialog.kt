@@ -12,17 +12,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import org.example.project.model.Ingredient
+import org.example.project.model.Food
 import org.example.project.model.Meal
 import org.example.project.model.Model
-import org.example.project.model.SizedIngredient
+import org.example.project.model.SizedFood
 
 @Composable
 fun AddMealDialog(
     onDismiss: () -> Unit,
-    onAddMeal: (String, List<SizedIngredient>) -> Unit,
-    onEditMeal: (String, String, List<SizedIngredient>) -> Unit,
-    allIngredients: List<Ingredient>,
+    onAddMeal: (String, List<SizedFood>) -> Unit,
+    onEditMeal: (String, String, List<SizedFood>) -> Unit,
+    allFoods: List<Food>,
     meal: Meal? = null
 ) {
     val isEdit = meal != null
@@ -50,13 +50,13 @@ fun AddMealDialog(
 
                 var mealName by remember { mutableStateOf(meal?.name ?: "") }
                 var searchQuery by remember { mutableStateOf("") }
-                val filteredIngredients by remember(searchQuery) {
-                    derivedStateOf { Model.filterIngredients(searchQuery, allIngredients) }
+                val filteredFoods by remember(searchQuery) {
+                    derivedStateOf { Model.filterFoods(searchQuery, allFoods) }
                 }
-                val selectedIngredients = remember {
-                    mutableStateListOf<SizedIngredient>().apply {
+                val selectedFoods = remember {
+                    mutableStateListOf<SizedFood>().apply {
                         if (meal != null) {
-                            addAll(meal.ingredients)
+                            addAll(meal.foods)
                         }
                     }
                 }
@@ -78,7 +78,7 @@ fun AddMealDialog(
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
-                    // Left side: Drawer with search and ingredient suggestions
+                    // Left side: Drawer with search and food suggestions
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -87,19 +87,19 @@ fun AddMealDialog(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            label = { Text("Search Ingredients") },
+                            label = { Text("Search Foods") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
                         )
                         LazyColumn {
-                            items(filteredIngredients) { ingredient ->
+                            items(filteredFoods) { food ->
                                 Text(
-                                    text = ingredient.name,
+                                    text = food.name,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            selectedIngredients.add(SizedIngredient(ingredient.id, 100f))
+                                            selectedFoods.add(SizedFood(food.name, 100f))
                                         }
                                         .padding(8.dp),
                                     fontSize = 14.sp
@@ -108,45 +108,53 @@ fun AddMealDialog(
                         }
                     }
 
-                    // Right side: Tabletop with selected ingredients and total macros
+                    // Right side: Tabletop with selected foods and total macros
                     Column(
                         modifier = Modifier
                             .weight(2f)
                             .padding(start = 8.dp)
                     ) {
                         // Total macros
-                        val totalCalories by remember(selectedIngredients, Model.ingredients) {
+                        val totalCalories by remember(selectedFoods, Model.foods) {
                             derivedStateOf {
-                                selectedIngredients.sumOf { sized ->
-                                    Model.getIngredientById(sized.ingredientId)?.calories?.toDouble()?.times(sized.grams / 100) ?: 0.0
+                                selectedFoods.sumOf { sized ->
+                                    val macros = Model.getFoodMacros(sized.foodName)
+                                    if (macros != null) {
+                                        val calories = macros.proteins * 4 + macros.carbs * 4 + macros.fats * 9
+                                        calories.toDouble() * sized.grams / 100
+                                    } else 0.0
                                 }.toFloat()
                             }
                         }
-                        val totalCarbs by remember(selectedIngredients, Model.ingredients) {
+                        val totalCarbs by remember(selectedFoods, Model.foods) {
                             derivedStateOf {
-                                selectedIngredients.sumOf { sized ->
-                                    Model.getIngredientById(sized.ingredientId)?.carbs?.toDouble()?.times(sized.grams / 100) ?: 0.0
+                                selectedFoods.sumOf { sized ->
+                                    val macros = Model.getFoodMacros(sized.foodName)
+                                    macros?.carbs?.toDouble()?.times(sized.grams / 100) ?: 0.0
                                 }.toFloat()
                             }
                         }
-                        val totalProteins by remember(selectedIngredients, Model.ingredients) {
+                        val totalProteins by remember(selectedFoods, Model.foods) {
                             derivedStateOf {
-                                selectedIngredients.sumOf { sized ->
-                                    Model.getIngredientById(sized.ingredientId)?.proteins?.toDouble()?.times(sized.grams / 100) ?: 0.0
+                                selectedFoods.sumOf { sized ->
+                                    val macros = Model.getFoodMacros(sized.foodName)
+                                    macros?.proteins?.toDouble()?.times(sized.grams / 100) ?: 0.0
                                 }.toFloat()
                             }
                         }
-                        val totalFats by remember(selectedIngredients, Model.ingredients) {
+                        val totalFats by remember(selectedFoods, Model.foods) {
                             derivedStateOf {
-                                selectedIngredients.sumOf { sized ->
-                                    Model.getIngredientById(sized.ingredientId)?.fats?.toDouble()?.times(sized.grams / 100) ?: 0.0
+                                selectedFoods.sumOf { sized ->
+                                    val macros = Model.getFoodMacros(sized.foodName)
+                                    macros?.fats?.toDouble()?.times(sized.grams / 100) ?: 0.0
                                 }.toFloat()
                             }
                         }
-                        val totalWater by remember(selectedIngredients, Model.ingredients) {
+                        val totalWater by remember(selectedFoods, Model.foods) {
                             derivedStateOf {
-                                selectedIngredients.sumOf { sized ->
-                                    Model.getIngredientById(sized.ingredientId)?.waterMassPercentage?.toDouble()?.times(sized.grams / 100) ?: 0.0
+                                selectedFoods.sumOf { sized ->
+                                    val macros = Model.getFoodMacros(sized.foodName)
+                                    macros?.waterMassPercentage?.toDouble()?.times(sized.grams / 100) ?: 0.0
                                 }.toFloat()
                             }
                         }
@@ -166,10 +174,10 @@ fun AddMealDialog(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Selected ingredients
+                        // Selected foods
                         LazyColumn {
-                            items(selectedIngredients) { sizedIngredient ->
-                                val ingredient = Model.getIngredientById(sizedIngredient.ingredientId)
+                            items(selectedFoods) { sizedFood ->
+                                val macros = Model.getFoodMacros(sizedFood.foodName)
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -183,36 +191,34 @@ fun AddMealDialog(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = ingredient?.name ?: "Unknown Ingredient",
+                                            text = sizedFood.foodName,
                                             modifier = Modifier.weight(1f),
                                             fontSize = 16.sp
                                         )
                                         OutlinedTextField(
-                                            value = sizedIngredient.grams.toString(),
+                                            value = sizedFood.grams.toString(),
                                             onValueChange = { newValue ->
                                                 val grams = newValue.toFloatOrNull() ?: 0f
-                                                val index = selectedIngredients.indexOf(sizedIngredient)
-                                                selectedIngredients[index] = sizedIngredient.copy(grams = grams)
+                                                val index = selectedFoods.indexOf(sizedFood)
+                                                selectedFoods[index] = sizedFood.copy(grams = grams)
                                             },
                                             label = { Text("Grams") },
                                             modifier = Modifier.width(100.dp)
                                         )
-                                        Text(
-                                            text = "Cal: %.1f".format(ingredient?.calories?.times(sizedIngredient.grams / 100) ?: 0f),
-                                            fontSize = 16.sp
-                                        )
-                                        Text(
-                                            text = "C: %.1f".format(ingredient?.carbs?.times(sizedIngredient.grams / 100) ?: 0f),
-                                            fontSize = 16.sp
-                                        )
-                                        Text(
-                                            text = "P: %.1f".format(ingredient?.proteins?.times(sizedIngredient.grams / 100) ?: 0f),
-                                            fontSize = 16.sp
-                                        )
-                                        Text(
-                                            text = "F: %.1f".format(ingredient?.fats?.times(sizedIngredient.grams / 100) ?: 0f),
-                                            fontSize = 16.sp
-                                        )
+                                        if (macros != null) {
+                                            val calories = (macros.proteins * 4 + macros.carbs * 4 + macros.fats * 9) * sizedFood.grams / 100
+                                            Text("Cal: %.1f".format(calories), fontSize = 16.sp)
+                                            Text("C: %.1f".format(macros.carbs * sizedFood.grams / 100), fontSize = 16.sp)
+                                            Text("P: %.1f".format(macros.proteins * sizedFood.grams / 100), fontSize = 16.sp)
+                                            Text("F: %.1f".format(macros.fats * sizedFood.grams / 100), fontSize = 16.sp)
+                                        }
+                                        Button(
+                                            onClick = { selectedFoods.remove(sizedFood) },
+                                            modifier = Modifier.size(32.dp),
+                                            contentPadding = PaddingValues(0.dp)
+                                        ) {
+                                            Text("×", fontSize = 18.sp)
+                                        }
                                     }
                                 }
                             }
@@ -226,16 +232,16 @@ fun AddMealDialog(
                 Button(
                     onClick = {
                         if (isEdit) {
-                            onEditMeal(meal!!.id, mealName, selectedIngredients.toList())
+                            onEditMeal(meal!!.id, mealName, selectedFoods.toList())
                         } else {
-                            onAddMeal(mealName, selectedIngredients.toList())
+                            onAddMeal(mealName, selectedFoods.toList())
                         }
                         onDismiss()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp),
-                    enabled = mealName.isNotBlank() && selectedIngredients.isNotEmpty()
+                    enabled = mealName.isNotBlank() && selectedFoods.isNotEmpty()
                 ) {
                     Text(if (isEdit) "Update Meal" else "Add Meal")
                 }

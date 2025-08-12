@@ -11,48 +11,101 @@ import java.util.UUID
 
 object Model {
     // File storage for persistence
-    private val ingredientsFile = File("ingredients.json")
+    private val foodsFile = File("foods.json")
     private val mealsFile = File("meals.json")
-    private val menusFile = File("menus.json")
+    private val multiDayMenusFile = File("multi_day_menus.json")
 
     // Reactive state for UI observation
-    private val _ingredients = mutableStateListOf<Ingredient>()
-    val ingredients: List<Ingredient> get() = _ingredients.toList()
+    private val _foods = mutableStateListOf<Food>()
+    val foods: List<Food> get() = _foods.toList()
 
     private val _meals = mutableStateListOf<Meal>()
     val meals: List<Meal> get() = _meals.toList()
 
-    private val _menus = mutableStateListOf<DailyMenu>()
-    val menus: List<DailyMenu> get() = _menus.toList()
+    private val _multiDayMenus = mutableStateListOf<MultiDayMenu>()
+    val multiDayMenus: List<MultiDayMenu> get() = _multiDayMenus.toList()
 
     // Current screen state
-    var currentScreen by mutableStateOf(Screen.Ingredients)
+    var currentScreen by mutableStateOf(Screen.Foods)
+
+    // Cache for macro calculations to avoid repeated recursive computation
+    private val macroCache = mutableMapOf<String, FoodMacros>()
 
     // Helper functions to resolve references
-    fun getIngredientById(id: String): Ingredient? {
-        return _ingredients.find { it.id == id }
+    fun getFoodByName(name: String): Food? {
+        return _foods.find { it.name == name }
     }
 
     fun getMealById(id: String): Meal? {
         return _meals.find { it.id == id }
     }
 
-    // Serialization and deserialization
-    private fun parseIngredients(): List<Ingredient> {
-        return if (ingredientsFile.exists()) {
-            Json.decodeFromString(ingredientsFile.readText())
+    fun getMultiDayMenuById(id: String): MultiDayMenu? {
+        return _multiDayMenus.find { it.id == id }
+    }
+
+    // Recursive macro calculation with caching
+    fun getFoodMacros(foodName: String): FoodMacros? {
+        if (macroCache.containsKey(foodName)) {
+            return macroCache[foodName]
+        }
+
+        val food = getFoodByName(foodName) ?: return null
+        
+        val macros = if (food.isBasicFood) {
+            FoodMacros(
+                proteins = food.proteins ?: 0f,
+                carbs = food.carbs ?: 0f,
+                fats = food.fats ?: 0f,
+                waterMassPercentage = food.waterMassPercentage ?: 0f
+            )
+        } else {
+            // Recursively calculate macros for compound foods
+            var totalProteins = 0f
+            var totalCarbs = 0f
+            var totalFats = 0f
+            var totalWater = 0f
+
+            for ((componentName, percentage) in food.components) {
+                val componentMacros = getFoodMacros(componentName)
+                if (componentMacros != null) {
+                    val factor = percentage / 100f
+                    totalProteins += componentMacros.proteins * factor
+                    totalCarbs += componentMacros.carbs * factor
+                    totalFats += componentMacros.fats * factor
+                    totalWater += componentMacros.waterMassPercentage * factor
+                }
+            }
+
+            FoodMacros(totalProteins, totalCarbs, totalFats, totalWater)
+        }
+
+        macroCache[foodName] = macros
+        return macros
+    }
+
+    // Clear macro cache when foods are modified
+    private fun clearMacroCache() {
+        macroCache.clear()
+    }
+
+    // Persistence functions
+    private fun parseFoods(): List<Food> {
+        return if (foodsFile.exists()) {
+            Json.decodeFromString(foodsFile.readText())
         } else {
             emptyList()
         }
     }
 
-    private fun dumpIngredients(ingredients: List<Ingredient>) {
-        ingredientsFile.writeText(Json.encodeToString(ingredients))
+    private fun dumpFoods(foods: List<Food>) {
+        foodsFile.writeText(Json.encodeToString(foods))
     }
 
-    fun loadIngredients() {
-        _ingredients.clear()
-        _ingredients.addAll(parseIngredients())
+    fun loadFoods() {
+        _foods.clear()
+        _foods.addAll(parseFoods())
+        clearMacroCache()
     }
 
     private fun parseMeals(): List<Meal> {
@@ -72,145 +125,178 @@ object Model {
         _meals.addAll(parseMeals())
     }
 
-    private fun parseMenus(): List<DailyMenu> {
-        return if (menusFile.exists()) {
-            Json.decodeFromString(menusFile.readText())
+    private fun parseMultiDayMenus(): List<MultiDayMenu> {
+        return if (multiDayMenusFile.exists()) {
+            Json.decodeFromString(multiDayMenusFile.readText())
         } else {
             emptyList()
         }
     }
 
-    private fun dumpMenus(menus: List<DailyMenu>) {
-        menusFile.writeText(Json.encodeToString(menus))
+    private fun dumpMultiDayMenus(menus: List<MultiDayMenu>) {
+        multiDayMenusFile.writeText(Json.encodeToString(menus))
     }
 
-    fun loadMenus() {
-        _menus.clear()
-        _menus.addAll(parseMenus())
+    fun loadMultiDayMenus() {
+        _multiDayMenus.clear()
+        _multiDayMenus.addAll(parseMultiDayMenus())
     }
 
-    // CRUD for Ingredients
-    fun insertIngredient(
-        name: String,
-        proteins: String,
-        fats: String,
-        carbs: String,
-        water: String
-    ): Boolean {
-        // Validate inputs
-        val p = proteins.toFloatOrNull()
-        val c = carbs.toFloatOrNull()
-        val f = fats.toFloatOrNull()
-        val w = water.toFloatOrNull()
+    // Food CRUD operations
+    fun insertFood(food: Food): Boolean {
+        if (!food.validate()) return false
+        if (_foods.any { it.name == food.name }) return false // Name must be unique
 
-        if (name.isBlank() || p == null || c == null || f == null || w == null) return false
-        if (p < 0 || c < 0 || f < 0 || w < 0) return false
-        if (p + c + f + w > 100f) return false
+        // Validate component references for compound foods
+        if (food.isCompoundFood) {
+            if (food.components.keys.any { componentName -> getFoodByName(componentName) == null }) {
+                return false // Referenced food doesn't exist
+            }
+        }
 
-        val newIngredient = Ingredient(
-            id = UUID.randomUUID().toString(),
-            name = name.trim(),
-            proteins = p,
-            carbs = c,
-            fats = f,
-            waterMassPercentage = w
-        )
-
-        _ingredients.add(newIngredient)
-        dumpIngredients(_ingredients)
+        _foods.add(food)
+        dumpFoods(_foods)
+        clearMacroCache()
         return true
     }
 
-    fun updateIngredient(
-        id: String,
-        name: String,
-        proteins: String,
-        carbs: String,
-        fats: String,
-        water: String
-    ): Boolean {
-        val p = proteins.toFloatOrNull()
-        val c = carbs.toFloatOrNull()
-        val f = fats.toFloatOrNull()
-        val w = water.toFloatOrNull()
-
-        if (name.isBlank() || p == null || c == null || f == null || w == null) return false
-        if (p < 0 || c < 0 || f < 0 || w < 0) return false
-        if (p + c + f + w > 100f) return false
-
-        val index = _ingredients.indexOfFirst { it.id == id }
+    fun updateFood(originalName: String, updatedFood: Food): Boolean {
+        if (!updatedFood.validate()) return false
+        
+        val index = _foods.indexOfFirst { it.name == originalName }
         if (index == -1) return false
 
-        _ingredients[index] = Ingredient(
-            id = id,
-            name = name.trim(),
-            proteins = p,
-            carbs = c,
-            fats = f,
-            waterMassPercentage = w
-        )
-        dumpIngredients(_ingredients)
+        // If changing name, check uniqueness
+        if (originalName != updatedFood.name && _foods.any { it.name == updatedFood.name }) {
+            return false
+        }
+
+        // Validate component references for compound foods
+        if (updatedFood.isCompoundFood) {
+            if (updatedFood.components.keys.any { componentName -> 
+                componentName != updatedFood.name && getFoodByName(componentName) == null 
+            }) {
+                return false
+            }
+        }
+
+        _foods[index] = updatedFood
+        dumpFoods(_foods)
+        clearMacroCache()
         return true
     }
 
-    fun deleteIngredient(ingredientId: String): Boolean {
-        // Check if ingredient is used in any meal
-        if (_meals.any { meal -> meal.ingredients.any { it.ingredientId == ingredientId } }) {
-            return false // Prevent deletion if referenced
+    fun deleteFood(foodName: String): Boolean {
+        // Check if food is used in other compound foods
+        if (_foods.any { food -> food.isCompoundFood && food.components.containsKey(foodName) }) {
+            return false
         }
-        val removed = _ingredients.removeIf { it.id == ingredientId }
+
+        // Check if food is used in any meal
+        if (_meals.any { meal -> meal.foods.any { it.foodName == foodName } }) {
+            return false
+        }
+
+        // Decrement usage count for all components
+        val foodToDelete = getFoodByName(foodName)
+        if (foodToDelete?.isCompoundFood == true) {
+            foodToDelete.components.keys.forEach { componentName ->
+                decrementFoodUsage(componentName)
+            }
+        }
+
+        val removed = _foods.removeIf { it.name == foodName }
         if (removed) {
-            dumpIngredients(_ingredients)
+            dumpFoods(_foods)
+            clearMacroCache()
         }
         return removed
     }
 
-    // CRUD for Meals
-    fun insertMeal(name: String, sizedIngredients: List<SizedIngredient>): Boolean {
-        if (name.isBlank()) return false
-        // Validate that all ingredient IDs exist
-        if (sizedIngredients.any { it.ingredientId !in _ingredients.map { ingr -> ingr.id } }) {
-            return false
+    // Usage counting functions
+    private fun incrementFoodUsage(foodName: String) {
+        val index = _foods.indexOfFirst { it.name == foodName }
+        if (index != -1) {
+            _foods[index] = _foods[index].copy(usageCount = _foods[index].usageCount + 1)
         }
-        if (sizedIngredients.any { it.grams <= 0f }) return false
+    }
+
+    private fun decrementFoodUsage(foodName: String) {
+        val index = _foods.indexOfFirst { it.name == foodName }
+        if (index != -1 && _foods[index].usageCount > 0) {
+            _foods[index] = _foods[index].copy(usageCount = _foods[index].usageCount - 1)
+        }
+    }
+
+    // Meal CRUD operations
+    fun insertMeal(name: String, sizedFoods: List<SizedFood>): Boolean {
+        if (name.isBlank()) return false
+        if (sizedFoods.any { !it.validate() }) return false
+        if (sizedFoods.any { getFoodByName(it.foodName) == null }) return false
 
         val newMeal = Meal(
             id = UUID.randomUUID().toString(),
             name = name.trim(),
-            ingredients = sizedIngredients
+            foods = sizedFoods
         )
+
+        // Increment usage count for all foods used in this meal
+        sizedFoods.forEach { sizedFood ->
+            incrementFoodUsageInMenus(sizedFood.foodName)
+        }
+
         _meals.add(newMeal)
         dumpMeals(_meals)
         return true
     }
 
-    fun updateMeal(id: String, name: String, sizedIngredients: List<SizedIngredient>): Boolean {
+    fun updateMeal(id: String, name: String, sizedFoods: List<SizedFood>): Boolean {
         if (name.isBlank()) return false
-        if (sizedIngredients.any { it.ingredientId !in _ingredients.map { ingr -> ingr.id } }) {
-            return false
-        }
-        if (sizedIngredients.any { it.grams <= 0f }) return false
+        if (sizedFoods.any { !it.validate() }) return false
+        if (sizedFoods.any { getFoodByName(it.foodName) == null }) return false
 
         val index = _meals.indexOfFirst { it.id == id }
         if (index == -1) return false
 
+        val oldMeal = _meals[index]
+        
+        // Update usage counts
+        oldMeal.foods.forEach { sizedFood ->
+            decrementFoodUsageInMenus(sizedFood.foodName)
+        }
+        sizedFoods.forEach { sizedFood ->
+            incrementFoodUsageInMenus(sizedFood.foodName)
+        }
+
         _meals[index] = Meal(
             id = id,
             name = name.trim(),
-            ingredients = sizedIngredients
+            foods = sizedFoods
         )
         dumpMeals(_meals)
         return true
     }
 
     fun deleteMeal(mealId: String): Boolean {
-        // Check if meal is used in any menu
-        if (_menus.any { menu ->
-                menu.breakfastId == mealId || menu.snack1Id == mealId ||
-                        menu.lunchId == mealId || menu.snack2Id == mealId || menu.dinnerId == mealId
-            }) {
-            return false // Prevent deletion if referenced
+        // Check if meal is used in any multi-day menu
+        if (_multiDayMenus.any { multiDayMenu ->
+            multiDayMenu.dailyMenus.any { dailyMenu ->
+                dailyMenu.breakfastId == mealId || dailyMenu.snack1Id == mealId ||
+                        dailyMenu.lunchId == mealId || dailyMenu.snack2Id == mealId || 
+                        dailyMenu.dinnerId == mealId
+            }
+        }) {
+            return false
         }
+
+        val mealToDelete = _meals.find { it.id == mealId }
+        if (mealToDelete != null) {
+            // Decrement usage count for all foods in this meal
+            mealToDelete.foods.forEach { sizedFood ->
+                decrementFoodUsageInMenus(sizedFood.foodName)
+            }
+        }
+
         val removed = _meals.removeIf { it.id == mealId }
         if (removed) {
             dumpMeals(_meals)
@@ -218,81 +304,70 @@ object Model {
         return removed
     }
 
-    // CRUD for Menus
-    fun insertMenu(
-        breakfastId: String?,
-        snack1Id: String?,
-        lunchId: String?,
-        snack2Id: String?,
-        dinnerId: String?,
-        name: String?
-    ): Boolean {
-        // Validate that provided meal IDs exist (or are null)
-        if (listOfNotNull(breakfastId, snack1Id, lunchId, snack2Id, dinnerId)
-                .any { it !in _meals.map { meal -> meal.id } }
-        ) {
-            return false
+    // Helper functions for tracking food usage in menus
+    private fun incrementFoodUsageInMenus(foodName: String) {
+        incrementFoodUsage(foodName)
+        // Also increment for compound food components
+        val food = getFoodByName(foodName)
+        if (food?.isCompoundFood == true) {
+            food.components.keys.forEach { componentName ->
+                incrementFoodUsageInMenus(componentName)
+            }
+        }
+    }
+
+    private fun decrementFoodUsageInMenus(foodName: String) {
+        decrementFoodUsage(foodName)
+        // Also decrement for compound food components
+        val food = getFoodByName(foodName)
+        if (food?.isCompoundFood == true) {
+            food.components.keys.forEach { componentName ->
+                decrementFoodUsageInMenus(componentName)
+            }
+        }
+    }
+
+    // Multi-day menu CRUD operations
+    fun insertMultiDayMenu(description: String, days: Int): Boolean {
+        if (description.isBlank() || days <= 0) return false
+
+        val emptyDailyMenus = (1..days).map { dayIndex ->
+            DailyMenu(
+                id = UUID.randomUUID().toString(),
+                name = "Day $dayIndex",
+                breakfastId = "",
+                snack1Id = "",
+                lunchId = "",
+                snack2Id = "",
+                dinnerId = ""
+            )
         }
 
-        val newMenu = DailyMenu(
-            id = UUID.randomUUID().toString(),
-            breakfastId = breakfastId!!,
-            snack1Id = snack1Id!!,
-            lunchId = lunchId!!,
-            snack2Id = snack2Id!!,
-            dinnerId = dinnerId!!,
-            name = name
+        val newMultiDayMenu = MultiDayMenu(
+            description = description.trim(),
+            days = days,
+            dailyMenus = emptyDailyMenus
         )
-        _menus.add(newMenu)
-        dumpMenus(_menus)
+
+        _multiDayMenus.add(newMultiDayMenu)
+        dumpMultiDayMenus(_multiDayMenus)
         return true
     }
 
-    fun updateMenu(
-        id: String,
-        breakfastId: String?,
-        snack1Id: String?,
-        lunchId: String?,
-        snack2Id: String?,
-        dinnerId: String?,
-        name: String?
-    ): Boolean {
-        if (listOfNotNull(breakfastId, snack1Id, lunchId, snack2Id, dinnerId)
-                .any { it !in _meals.map { meal -> meal.id } }
-        ) {
-            return false
-        }
-
-        val index = _menus.indexOfFirst { it.id == id }
-        if (index == -1) return false
-
-        _menus[index] = DailyMenu(
-            id = id,
-            breakfastId = breakfastId!!,
-            snack1Id = snack1Id!!,
-            lunchId = lunchId!!,
-            snack2Id = snack2Id!!,
-            dinnerId = dinnerId!!,
-            name = name
-        )
-        dumpMenus(_menus)
-        return true
-    }
-
-    fun deleteMenu(menuId: String): Boolean {
-        val removed = _menus.removeIf { it.id == menuId }
+    fun deleteMultiDayMenu(menuId: String): Boolean {
+        val removed = _multiDayMenus.removeIf { it.id == menuId }
         if (removed) {
-            dumpMenus(_menus)
+            dumpMultiDayMenus(_multiDayMenus)
         }
         return removed
     }
 
     // Search functions
-    fun filterIngredients(query: String, ingredients: List<Ingredient> = _ingredients): List<Ingredient> {
+    fun filterFoods(query: String, foods: List<Food> = _foods): List<Food> {
         return if (query.isBlank()) {
-            ingredients
+            foods
         } else {
-            ingredients.filter { it.name.contains(query, ignoreCase = true) }
+            foods.filter { it.name.contains(query, ignoreCase = true) }
         }
     }
 
@@ -304,16 +379,26 @@ object Model {
         }
     }
 
-    fun filterMenus(query: String, menus: List<DailyMenu> = _menus): List<DailyMenu> {
-        if (query.isBlank()) return menus
-        return menus.filter { menu ->
-            listOfNotNull(
-                getMealById(menu.breakfastId)?.name,
-                getMealById(menu.snack1Id)?.name,
-                getMealById(menu.lunchId)?.name,
-                getMealById(menu.snack2Id)?.name,
-                getMealById(menu.dinnerId)?.name
-            ).any { it?.contains(query, ignoreCase = true) == true }
+    fun filterMultiDayMenus(query: String, menus: List<MultiDayMenu> = _multiDayMenus): List<MultiDayMenu> {
+        return if (query.isBlank()) {
+            menus
+        } else {
+            menus.filter { it.description.contains(query, ignoreCase = true) }
         }
+    }
+
+    // Sorting functions
+    fun sortFoodsByName(ascending: Boolean = true): List<Food> {
+        return if (ascending) _foods.sortedBy { it.name }
+        else _foods.sortedByDescending { it.name }
+    }
+
+    fun sortFoodsByUsage(ascending: Boolean = false): List<Food> {
+        return if (ascending) _foods.sortedBy { it.usageCount }
+        else _foods.sortedByDescending { it.usageCount }
+    }
+
+    fun sortFoodsByCategory(): List<Food> {
+        return _foods.sortedBy { it.category.ordinal }
     }
 }
