@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(./gradlew:*)",
-      "Bash(set GRADLE_OPTS=-Xmx1024m)"
+      "Bash(set GRADLE_OPTS=-Xmx1024m)",
+      "Bash(mv:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

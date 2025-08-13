@@ -1,4 +1,4 @@
-package org.example.project.view
+package org.example.project.view.dialogs
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

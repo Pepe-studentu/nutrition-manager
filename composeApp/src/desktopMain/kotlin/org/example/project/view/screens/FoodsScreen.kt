@@ -1,4 +1,4 @@
-package org.example.project.view
+package org.example.project.view.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -11,6 +11,8 @@ import kotlinprojecttest.composeapp.generated.resources.add
 import kotlinx.coroutines.launch
 import org.example.project.model.Food
 import org.example.project.model.Model
+import org.example.project.view.components.FoodTable
+import org.example.project.view.dialogs.FoodInputDialog
 import org.example.project.view.theme.AccessibilityTypography
 import org.jetbrains.compose.resources.painterResource
 

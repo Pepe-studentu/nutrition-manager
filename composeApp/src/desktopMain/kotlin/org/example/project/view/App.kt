@@ -9,6 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.example.project.model.Model
 import org.example.project.model.Screen
+import org.example.project.view.components.MyNavBar
+import org.example.project.view.screens.FoodsScreen
+import org.example.project.view.screens.MenusScreen
 import org.example.project.view.theme.AppTheme
 @Composable
 fun App() {
@@ -32,7 +35,7 @@ fun App() {
             ) {
                 when (Model.currentScreen) {
                     Screen.Foods -> FoodsScreen()
-                    Screen.Menus -> MultiDayMenusScreen()
+                    Screen.Menus -> MenusScreen()
                 }
             }
         }

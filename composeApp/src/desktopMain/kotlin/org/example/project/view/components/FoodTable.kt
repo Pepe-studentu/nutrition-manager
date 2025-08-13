@@ -1,4 +1,4 @@
-package org.example.project.view
+package org.example.project.view.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
