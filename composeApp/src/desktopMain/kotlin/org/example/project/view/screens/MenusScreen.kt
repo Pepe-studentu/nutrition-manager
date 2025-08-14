@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +21,7 @@ import org.example.project.model.DailyMenu
 import org.example.project.model.Meal
 import org.example.project.model.Model
 import org.example.project.view.theme.AccessibilityTypography
+import org.example.project.view.dialogs.AddMealDialog
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -129,10 +131,11 @@ fun MultiDayMenuCard(
     onDeleteClick: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
 
     Surface(
-        modifier = Modifier.fillMaxWidth()
-            .clickable { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth().border(width = 2.dp, color = MaterialTheme.colorScheme.primary)
+            .clickable(indication = null, interactionSource = interactionSource) { expanded = !expanded },
         color = MaterialTheme.colorScheme.surface,
         shape = MaterialTheme.shapes.medium
     ) {
@@ -234,6 +237,13 @@ fun MultiDayMenuInputDialog(
 @Composable
 fun MenuGrid(menu: MultiDayMenu) {
     var selectedCell by remember { mutableStateOf<Pair<Int, Int>?>(null) } // (dayIndex, mealIndex)
+    var showAddMealDialog by remember { mutableStateOf(false) }
+    var addMealContext by remember { mutableStateOf<Pair<Int, Int>?>(null) } // (dayIndex, mealIndex)
+    var selectedMeal by remember { mutableStateOf<Meal?>(null) } // For editing
+    
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var mealToDelete by remember { mutableStateOf<Meal?>(null) }
+    var deleteContext by remember { mutableStateOf<Pair<Int, Int>?>(null) } // (dayIndex, mealIndex)
 
     val mealNames = listOf("Breakfast", "Snack 1", "Lunch", "Snack 2", "Dinner")
     val cellWidth = 200.dp
@@ -309,8 +319,15 @@ fun MenuGrid(menu: MultiDayMenu) {
                             meal = meal,
                             isSelected = selectedCell == Pair(dayIndex, mealIndex),
                             onClick = {
-                                selectedCell = if (selectedCell == Pair(dayIndex, mealIndex)) null
-                                else Pair(dayIndex, mealIndex)
+                                if (meal == null) {
+                                    // Empty cell - show add meal dialog
+                                    addMealContext = Pair(dayIndex, mealIndex)
+                                    showAddMealDialog = true
+                                } else {
+                                    // Populated cell - show/hide toolbar
+                                    selectedCell = if (selectedCell == Pair(dayIndex, mealIndex)) null
+                                    else Pair(dayIndex, mealIndex)
+                                }
                             },
                             modifier = Modifier
                                 .width(cellWidth)
@@ -352,7 +369,89 @@ fun MenuGrid(menu: MultiDayMenu) {
             }
         }
 
+        // Add/Edit Meal Dialog
+        if (showAddMealDialog) {
+            AddMealDialog(
+                onDismiss = { 
+                    showAddMealDialog = false
+                    addMealContext = null
+                    selectedMeal = null
+                },
+                onAddMeal = { mealName, sizedFoods ->
+                    val success = Model.insertMeal(mealName, sizedFoods)
+                    if (success && addMealContext != null) {
+                        val (dayIndex, mealIndex) = addMealContext!!
+                        val newMeal = Model.meals.lastOrNull()
+                        if (newMeal != null) {
+                            // Assign meal to the specific day and meal slot
+                            val dailyMenu = menu.dailyMenus.getOrNull(dayIndex)
+                            if (dailyMenu != null) {
+                                when (mealIndex) {
+                                    0 -> Model.updateDailyMenuMeal(dailyMenu.id, "breakfast", newMeal.id)
+                                    1 -> Model.updateDailyMenuMeal(dailyMenu.id, "snack1", newMeal.id)
+                                    2 -> Model.updateDailyMenuMeal(dailyMenu.id, "lunch", newMeal.id)
+                                    3 -> Model.updateDailyMenuMeal(dailyMenu.id, "snack2", newMeal.id)
+                                    4 -> Model.updateDailyMenuMeal(dailyMenu.id, "dinner", newMeal.id)
+                                }
+                            }
+                        }
+                    }
+                },
+                onEditMeal = { mealId, mealName, sizedFoods ->
+                    Model.updateMeal(mealId, mealName, sizedFoods)
+                },
+                allFoods = Model.foods,
+                meal = selectedMeal
+            )
+        }
+        
+        // Delete Meal Confirmation Dialog
+        if (showDeleteDialog && mealToDelete != null) {
+            AlertDialog(
+                onDismissRequest = {
+                    showDeleteDialog = false
+                    mealToDelete = null
+                    deleteContext = null
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        deleteContext?.let { (dayIndex, mealIndex) ->
+                            val dailyMenu = menu.dailyMenus.getOrNull(dayIndex)
+                            if (dailyMenu != null) {
+                                // Clear the meal from the daily menu slot
+                                when (mealIndex) {
+                                    0 -> Model.updateDailyMenuMeal(dailyMenu.id, "breakfast", "")
+                                    1 -> Model.updateDailyMenuMeal(dailyMenu.id, "snack1", "")
+                                    2 -> Model.updateDailyMenuMeal(dailyMenu.id, "lunch", "")
+                                    3 -> Model.updateDailyMenuMeal(dailyMenu.id, "snack2", "")
+                                    4 -> Model.updateDailyMenuMeal(dailyMenu.id, "dinner", "")
+                                }
+                            }
+                        }
+                        showDeleteDialog = false
+                        mealToDelete = null
+                        deleteContext = null
+                        selectedCell = null
+                    }) {
+                        Text("Remove")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = {
+                        showDeleteDialog = false
+                        mealToDelete = null
+                        deleteContext = null
+                    }) {
+                        Text("Cancel")
+                    }
+                },
+                title = { Text("Remove Meal from Menu") },
+                text = { Text("Are you sure you want to remove '${mealToDelete!!.name}' from this menu slot?") }
+            )
+        }
+
         // Floating toolbar for selected cell (positioned as overlay outside LazyRow)
+        // claude: in large menus, the toolbar will not be visible at the bottom. I would like it positioned where the mouse clicked.
         selectedCell?.let { (dayIndex, mealIndex) ->
             Card(
                 modifier = Modifier
@@ -365,7 +464,23 @@ fun MenuGrid(menu: MultiDayMenu) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        onClick = { /* TODO: Edit meal */ },
+                        onClick = { 
+                            val (dayIndex, mealIndex) = selectedCell!!
+                            val dailyMenu = menu.dailyMenus.getOrNull(dayIndex)
+                            val mealId = when (mealIndex) {
+                                0 -> dailyMenu?.breakfastId
+                                1 -> dailyMenu?.snack1Id
+                                2 -> dailyMenu?.lunchId
+                                3 -> dailyMenu?.snack2Id
+                                4 -> dailyMenu?.dinnerId
+                                else -> null
+                            }
+                            val meal = mealId?.let { Model.getMealById(it) }
+                            if (meal != null) {
+                                selectedMeal = meal
+                                showAddMealDialog = true
+                            }
+                        },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
@@ -373,12 +488,29 @@ fun MenuGrid(menu: MultiDayMenu) {
                         Text("Edit")
                     }
                     Button(
-                        onClick = { /* TODO: Delete meal */ },
+                        onClick = { 
+                            val (dayIndex, mealIndex) = selectedCell!!
+                            val dailyMenu = menu.dailyMenus.getOrNull(dayIndex)
+                            val mealId = when (mealIndex) {
+                                0 -> dailyMenu?.breakfastId
+                                1 -> dailyMenu?.snack1Id
+                                2 -> dailyMenu?.lunchId
+                                3 -> dailyMenu?.snack2Id
+                                4 -> dailyMenu?.dinnerId
+                                else -> null
+                            }
+                            val meal = mealId?.let { Model.getMealById(it) }
+                            if (meal != null) {
+                                mealToDelete = meal
+                                deleteContext = selectedCell
+                                showDeleteDialog = true
+                            }
+                        },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Delete")
+                        Text("Remove")
                     }
                     Button(
                         onClick = { /* TODO: Duplicate meal */ },

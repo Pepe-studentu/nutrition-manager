@@ -362,6 +362,34 @@ object Model {
         return removed
     }
 
+    fun updateDailyMenuMeal(dailyMenuId: String, mealSlot: String, mealId: String): Boolean {
+        val multiDayMenuIndex = _multiDayMenus.indexOfFirst { multiDayMenu ->
+            multiDayMenu.dailyMenus.any { it.id == dailyMenuId }
+        }
+        if (multiDayMenuIndex == -1) return false
+
+        val multiDayMenu = _multiDayMenus[multiDayMenuIndex]
+        val dailyMenuIndex = multiDayMenu.dailyMenus.indexOfFirst { it.id == dailyMenuId }
+        if (dailyMenuIndex == -1) return false
+
+        val dailyMenu = multiDayMenu.dailyMenus[dailyMenuIndex]
+        val updatedDailyMenu = when (mealSlot) {
+            "breakfast" -> dailyMenu.copy(breakfastId = mealId)
+            "snack1" -> dailyMenu.copy(snack1Id = mealId)
+            "lunch" -> dailyMenu.copy(lunchId = mealId)
+            "snack2" -> dailyMenu.copy(snack2Id = mealId)
+            "dinner" -> dailyMenu.copy(dinnerId = mealId)
+            else -> return false
+        }
+
+        val updatedDailyMenus = multiDayMenu.dailyMenus.toMutableList()
+        updatedDailyMenus[dailyMenuIndex] = updatedDailyMenu
+
+        _multiDayMenus[multiDayMenuIndex] = multiDayMenu.copy(dailyMenus = updatedDailyMenus)
+        dumpMultiDayMenus(_multiDayMenus)
+        return true
+    }
+
     // Search functions
     fun filterFoods(query: String, foods: List<Food> = _foods): List<Food> {
         return if (query.isBlank()) {
