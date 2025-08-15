@@ -44,7 +44,7 @@ fun AddMealDialog(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                var mealName by remember { mutableStateOf(meal?.description ?: "") }
+                var mealDescription by remember { mutableStateOf(meal?.description ?: "") }
                 var searchQuery by remember { mutableStateOf("") }
                 val filteredFoods by remember(searchQuery) {
                     derivedStateOf { Model.filterFoods(searchQuery, allFoods) }
@@ -70,8 +70,8 @@ fun AddMealDialog(
                         style = MaterialTheme.typography.titleMedium
                     )
                     TextField(
-                        value = mealName,
-                        onValueChange = { mealName = it },
+                        value = mealDescription,
+                        onValueChange = { mealDescription = it },
                         placeholder = { Text("description") },
                         modifier = Modifier.width(200.dp),
                         colors = TextFieldDefaults.colors(
@@ -226,7 +226,7 @@ fun AddMealDialog(
                                     modifier = Modifier.weight(1f),
                                     textAlign = TextAlign.Right
                                 )
-                                Spacer(Modifier.size(24.dp)) // ??
+                                Spacer(Modifier.weight(0.5f)) // ??
                             }
 
                             HorizontalDivider(
@@ -258,9 +258,8 @@ fun AddMealDialog(
                                                     val index = selectedFoods.indexOf(sizedFood)
                                                     selectedFoods[index] = sizedFood.copy(grams = grams)
                                                 },
-                                                textStyle = MaterialTheme.typography.bodyMedium,
-                                                modifier = Modifier.weight(1f),
-                                                suffix = { Text("g", style = MaterialTheme.typography.bodyMedium) },
+                                                textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.End),                                                modifier = Modifier.weight(1f),
+                                                suffix = { Text("g", style = MaterialTheme.typography.bodyMedium)},
                                                 colors = TextFieldDefaults.colors(
                                                     focusedContainerColor = Color.Transparent,
                                                     unfocusedContainerColor = Color.Transparent,
@@ -297,19 +296,21 @@ fun AddMealDialog(
                                                     textAlign = TextAlign.Right
                                                 )
                                             }
-                                            Button(
-                                                onClick = { selectedFoods.remove(sizedFood) },
-                                                modifier = Modifier.size(24.dp),
-                                                contentPadding = PaddingValues(0.dp),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = MaterialTheme.colorScheme.error
-                                                )
-                                            ) {
-                                                Text(
-                                                    "×", 
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onError
-                                                )
+                                            Box(modifier = Modifier.weight(0.5f), contentAlignment = Alignment.Center) {
+                                                Button(
+                                                    onClick = { selectedFoods.remove(sizedFood) },
+                                                    modifier = Modifier.size(24.dp),
+                                                    contentPadding = PaddingValues(0.dp),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = MaterialTheme.colorScheme.error
+                                                    )
+                                                ) {
+                                                    Text(
+                                                        "×",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onError
+                                                    )
+                                                }
                                             }
                                         }
                                         
@@ -332,11 +333,11 @@ fun AddMealDialog(
                 // Add/Update button
                 Button(
                     onClick = {
-                        val finalMealName = if (mealName.isBlank()) "none" else mealName
+                        val finalMealDescription = mealDescription.ifBlank { "none" }
                         if (isEdit) {
-                            onEditMeal(meal!!.id, finalMealName, selectedFoods.toList())
+                            onEditMeal(meal!!.id, finalMealDescription, selectedFoods.toList())
                         } else {
-                            onAddMeal(finalMealName, selectedFoods.toList())
+                            onAddMeal(finalMealDescription, selectedFoods.toList())
                         }
                         onDismiss()
                     },

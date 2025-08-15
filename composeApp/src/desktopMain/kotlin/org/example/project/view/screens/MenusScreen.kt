@@ -195,6 +195,10 @@ fun MenusScreen() {
                                     3 -> Model.updateDailyMenuMeal(dailyMenu.id, "snack2", "")
                                     4 -> Model.updateDailyMenuMeal(dailyMenu.id, "dinner", "")
                                 }
+                                // Delete the orphaned meal after removing it from the menu
+                                mealToDelete?.let { meal ->
+                                    Model.deleteMeal(meal.id)
+                                }
                             }
                         }
                         showMealDeleteDialog = false

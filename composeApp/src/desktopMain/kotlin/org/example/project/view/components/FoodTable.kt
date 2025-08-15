@@ -24,7 +24,7 @@ fun ShowFoodComponents(food: Food, indentLevel: Int) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 2.dp, horizontal = 16.dp)
-                    .padding(start = (indentLevel * 20).dp)
+                    .padding(start = (indentLevel * 25).dp)
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
             ) {
                 Text(

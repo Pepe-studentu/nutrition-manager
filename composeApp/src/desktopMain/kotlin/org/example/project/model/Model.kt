@@ -236,7 +236,7 @@ object Model {
 
         val newMeal = Meal(
             id = UUID.randomUUID().toString(),
-            name = name.trim(),
+            description = name.trim(),
             foods = sizedFoods
         )
 
@@ -270,7 +270,7 @@ object Model {
 
         _meals[index] = Meal(
             id = id,
-            name = name.trim(),
+            description = name.trim(),
             foods = sizedFoods
         )
         dumpMeals(_meals)
@@ -403,7 +403,7 @@ object Model {
         return if (query.isBlank()) {
             meals
         } else {
-            meals.filter { it.name.contains(query, ignoreCase = true) }
+            meals.filter { it.description.contains(query, ignoreCase = true) }
         }
     }
 

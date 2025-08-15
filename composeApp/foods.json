@@ -1,1 +1,1 @@
-[{"name":"Test chicken","category":"MEAT_FISH","proteins":20.0,"carbs":1.0,"fats":10.0,"waterMassPercentage":22.0},{"name":"test tomatoes","category":"VEGGIES","proteins":2.0,"carbs":20.0,"fats":2.0,"waterMassPercentage":40.0},{"name":"salata de pui cu rosii","category":"MEAT_FISH","components":{"Test chicken":70.0,"test tomatoes":10.0}}]
+[{"name":"Test chicken","category":"MEAT_FISH","proteins":20.0,"carbs":1.0,"fats":10.0,"waterMassPercentage":22.0},{"name":"test tomatoes","category":"VEGGIES","proteins":2.0,"carbs":20.0,"fats":2.0,"waterMassPercentage":40.0}]

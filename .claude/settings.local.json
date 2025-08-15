@@ -4,7 +4,9 @@
       "Bash(./gradlew:*)",
       "Bash(set GRADLE_OPTS=-Xmx1024m)",
       "Bash(mv:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git grep:*)"
     ],
     "deny": []
   }
