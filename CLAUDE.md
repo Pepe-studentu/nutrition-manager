@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+### Prompt space
+
 ## Project Overview
 
 This is a Kotlin Multiplatform Desktop application built with Compose Multiplatform. It's a nutrition/meal planning application that allows users to manage foods, meals, and multi-day menus with nutritional calculations.
@@ -54,7 +56,7 @@ The user is a nutrition professional who will use the app to speed up their work
 - `screens/MenusScreen.kt` - Menu management interface
 - `dialogs/FoodInputDialog.kt` - Dialog for adding/editing foods
 - `dialogs/AddMealDialog.kt` - Dialog for creating meals
-- `theme/Theme.kt` - Application theming
+- `theme/Theme.kt` - Application theming: always use fonts from MaterialTheme.typography
 
 ### Data Flow
 1. Application loads data from JSON files on startup (foods.json, meals.json, multi_day_menus.json)
@@ -96,5 +98,50 @@ The application uses a centralized Model singleton pattern rather than ViewModel
 - Resources in `src/desktopMain/composeResources/`
 - JSON data files stored in `composeApp/` directory
 
-## Planning
+## Claude Workflow Instructions
+
+### Change Detection and Review
+When the user mentions changes or asks to review them:
+1. **Check CLAUDE.md changes**: I can detect changes automatically without git
+2. **Use conservative git diff**: `git diff --unified=3 --no-prefix --ignore-cr-at-eol HEAD~1`
+3. **Check current status**: `git status` for unstaged changes
+4. **Search for CLAUDE comments**: `git grep "// claude:"` at every prompt
+
+### Inline Code Instructions
+- User will place contextual instructions as `// claude:` comments in code files
+- I must search for these comments at every prompt and follow them
+- Instructions are context-specific and placed where relevant in the code
+
+### Branch Strategy
+- **Development branch**: Use for frequent small commits and active development
+- **Main branch**: Keep clean with meaningful commits only
+- User will explicitly indicate when to commit to main branch
+- Development branch allows tracking incremental changes via diffs
+
+### Comment Cleanup
+Before committing, remove CLAUDE comments with:
+```bash
+git grep -l "// claude:" | xargs sed -i '/\/\/ claude:/d'
+```
+
+### File Management
+- CLAUDE.md is gitignored to avoid polluting commits
+- Instructions primarily placed in CLAUDE.md
+- Inline comments used for context-specific guidance only
+
+### Token Efficiency
+- Use targeted diffs instead of reading entire files
+- Focus on changed sections only
+- Leverage git commands for efficient change detection
+
+### UI Code Organization Principles
+When working with Compose UI code, follow these organization principles:
+
+- **Prefer shorter files**: 650+ lines in a single file is too much - break into smaller, focused files
+- **Extract composables frequently**: Create separate composables to maintain readability and reusability
+- **Use aggregation over composition**: Create dedicated composables like `DeleteStuffDialog` instead of writing dialog code inline
+- **Avoid long composables with deep nesting**: Break complex composables into smaller, focused components
+- **Prioritize readability**: Even when compiled output is the same, readable code is easier to understand and maintain
+- **Keep UI code modular**: Well-separated composables are easier to test, reuse, and modify
+- **Separate concerns**: Dialog state and logic should be contained within appropriate scope levels
 

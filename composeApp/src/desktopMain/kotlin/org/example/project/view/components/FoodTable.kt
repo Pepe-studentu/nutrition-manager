@@ -16,6 +16,40 @@ import org.example.project.view.theme.AccessibilityTypography
 import org.example.project.view.theme.Black
 
 @Composable
+fun ShowFoodComponents(food: Food, indentLevel: Int) {
+    food.components.forEach { (componentName, percentage) ->
+        val componentFood = Model.getFoodByName(componentName)
+        if (componentFood != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp, horizontal = 16.dp)
+                    .padding(start = (indentLevel * 20).dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+            ) {
+                Text(
+                    text = "${percentage}% $componentName",
+                    modifier = Modifier.weight(2.5f),
+                    style = AccessibilityTypography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                // Empty cells for component rows
+                repeat(5) {
+                    Text(
+                        text = "",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            // Recursively show nested components if this component is also compound
+            if (componentFood.isCompoundFood) {
+                ShowFoodComponents(componentFood, indentLevel + 1)
+            }
+        }
+    }
+}
+
+@Composable
 fun FoodsHeader() {
     Row(
         modifier = Modifier
@@ -132,60 +166,9 @@ fun FoodRow(
             }
         }
 
-        // Show components if it's a compound food
+        // Show components recursively if it's a compound food
         if (food.isCompoundFood) {
-            food.components.forEach { (componentName, percentage) ->
-                val componentFood = Model.getFoodByName(componentName)
-                if (componentFood != null) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp, horizontal = 16.dp)
-                            .padding(start = ((indentLevel + 1) * 20).dp)
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
-                    ) {
-                        Text(
-                            text = "${percentage}% $componentName",
-                            modifier = Modifier.weight(2.5f),
-                            style = AccessibilityTypography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        // Empty cells for component rows
-                        repeat(5) {
-                            Text(
-                                text = "",
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-                    // Recursively show nested components
-                    if (componentFood.isCompoundFood) {
-                        componentFood.components.forEach { (nestedName, nestedPercentage) ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp, horizontal = 16.dp)
-                                    .padding(start = ((indentLevel + 2) * 20).dp)
-                                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f))
-                            ) {
-                                Text(
-                                    text = "${nestedPercentage}% $nestedName",
-                                    modifier = Modifier.weight(2.5f),
-                                    style = AccessibilityTypography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                // Empty cells for nested component rows
-                                repeat(5) {
-                                    Text(
-                                        text = "",
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            ShowFoodComponents(food, indentLevel + 1)
         }
 
         AnimatedVisibility(visible = expanded) {
