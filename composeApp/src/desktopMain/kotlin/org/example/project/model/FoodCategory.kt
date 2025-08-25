@@ -11,5 +11,6 @@ enum class FoodCategory(val displayName: String) {
     CEREALS_LEGUMES("Cereals & Legumes"),
     SUGARS("Sugars"),
     FATS("Fats"),
-    DRINKS("Drinks")
+    DRINKS("Drinks"),
+    NUTS("Nuts")
 }

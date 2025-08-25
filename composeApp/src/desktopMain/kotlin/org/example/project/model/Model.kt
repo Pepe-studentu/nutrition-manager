@@ -87,6 +87,8 @@ object Model {
     // Clear macro cache when foods are modified
     private fun clearMacroCache() {
         macroCache.clear()
+        // Also clear food category/tag caches
+        _foods.forEach { it.clearCache() }
     }
 
     // Persistence functions
@@ -104,8 +106,20 @@ object Model {
 
     fun loadFoods() {
         _foods.clear()
-        _foods.addAll(parseFoods())
+        val parsedFoods = parseFoods()
+        // Apply migration: convert old category field to categories set
+        val migratedFoods = parsedFoods.map { food ->
+            if (food.categories.isEmpty() && food.category != null) {
+                food.copy(categories = setOf(food.category))
+            } else {
+                food
+            }
+        }
+        _foods.addAll(migratedFoods)
         clearMacroCache()
+        
+        // Clear cache for all foods after loading
+        _foods.forEach { it.clearCache() }
     }
 
     private fun parseMeals(): List<Meal> {
@@ -395,7 +409,22 @@ object Model {
         return if (query.isBlank()) {
             foods
         } else {
-            foods.filter { it.name.contains(query, ignoreCase = true) }
+            foods.filter { food ->
+                // Search in food name
+                food.name.contains(query, ignoreCase = true) ||
+                // Search in effective tags (includes inherited tags for compound foods)
+                food.getEffectiveTags(::getFoodByName).any { tag -> 
+                    tag.contains(query, ignoreCase = true) 
+                } ||
+                // Search in effective categories (includes inherited categories for compound foods)
+                food.getEffectiveCategories(::getFoodByName).any { category ->
+                    category.displayName.contains(query, ignoreCase = true)
+                } ||
+                // Search in component food names (for compound foods)
+                food.components.keys.any { componentName -> 
+                    componentName.contains(query, ignoreCase = true)
+                }
+            }
         }
     }
 
@@ -427,6 +456,9 @@ object Model {
     }
 
     fun sortFoodsByCategory(): List<Food> {
-        return _foods.sortedBy { it.category.ordinal }
+        return _foods.sortedBy { food ->
+            // Use the first category from effective categories for sorting
+            food.getEffectiveCategories(::getFoodByName).minByOrNull { it.ordinal }?.ordinal ?: Int.MAX_VALUE
+        }
     }
 }

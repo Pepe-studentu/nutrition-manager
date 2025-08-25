@@ -4,12 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -32,7 +34,18 @@ fun FoodInputDialog(
 ) {
     var isCompoundFood by remember { mutableStateOf(food?.isCompoundFood ?: false) }
     var name by remember { mutableStateOf(food?.name ?: "") }
-    var selectedCategory by remember { mutableStateOf(food?.category ?: FoodCategory.VEGGIES) }
+    var selectedCategory by remember {
+        mutableStateOf(
+            food?.getEffectiveCategories(Model::getFoodByName)?.firstOrNull() ?: FoodCategory.VEGGIES
+        )
+    }
+
+    // Tags field (for basic foods only)
+    var tagsInput by remember {
+        mutableStateOf(
+            food?.getEffectiveTags(Model::getFoodByName)?.joinToString(";") ?: ""
+        )
+    }
 
     // Basic food fields
     var proteins by remember { mutableStateOf(food?.proteins?.toString() ?: "") }
@@ -43,15 +56,15 @@ fun FoodInputDialog(
     // Compound food fields
     var searchQuery by remember { mutableStateOf("") }
     val availableFoods by remember(searchQuery) {
-        derivedStateOf { 
+        derivedStateOf {
             Model.filterFoods(searchQuery).filter { it.name != name } // Don't allow self-reference
         }
     }
     val selectedComponents = remember {
         mutableStateListOf<FoodComponent>().apply {
             if (food?.isCompoundFood == true) {
-                addAll(food.components.map { (name, percentage) -> 
-                    FoodComponent(name, percentage) 
+                addAll(food.components.map { (name, percentage) ->
+                    FoodComponent(name, percentage)
                 })
             }
         }
@@ -112,37 +125,91 @@ fun FoodInputDialog(
                         textStyle = MaterialTheme.typography.bodyMedium
                     )
 
-                    // Category dropdown
-                    var expanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = !expanded },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        OutlinedTextField(
-                            value = selectedCategory.displayName,
-                            onValueChange = { },
-                            readOnly = true,
-                            label = { Text("Category", style = MaterialTheme.typography.bodyMedium) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth(),
-                            textStyle = MaterialTheme.typography.bodyMedium
-                        )
-                        ExposedDropdownMenu(
+                    // Category dropdown - only for basic foods
+                    if (!isCompoundFood) {
+                        var expanded by remember { mutableStateOf(false) }
+                        ExposedDropdownMenuBox(
                             expanded = expanded,
-                            onDismissRequest = { expanded = false }
+                            onExpandedChange = { expanded = !expanded },
+                            modifier = Modifier.weight(1f)
                         ) {
-                            FoodCategory.values().forEach { category ->
-                                DropdownMenuItem(
-                                    text = { Text(category.displayName, style = MaterialTheme.typography.bodyMedium) },
-                                    onClick = {
-                                        selectedCategory = category
-                                        expanded = false
-                                    }
-                                )
+                            OutlinedTextField(
+                                value = selectedCategory.displayName,
+                                onValueChange = { },
+                                readOnly = true,
+                                label = { Text("Category", style = MaterialTheme.typography.bodyMedium) },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                textStyle = MaterialTheme.typography.bodyMedium
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                FoodCategory.values().forEach { category ->
+                                    DropdownMenuItem(
+                                        text = { Text(category.displayName, style = MaterialTheme.typography.bodyMedium) },
+                                        onClick = {
+                                            selectedCategory = category
+                                            expanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
+                    } else {
+                        // For compound foods, show inherited categories as chips
+                            // Calculate inherited categories dynamically
+                            val inheritedCategories = remember(selectedComponents.toList()) {
+                                selectedComponents.mapNotNull { component ->
+                                    Model.getFoodByName(component.foodName)?.getEffectiveCategories(Model::getFoodByName)
+                                }.flatten().toSet()
+                            }
+
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                items(inheritedCategories.toList()) { category ->
+                                    FilterChip(
+                                        onClick = { /* Not selectable */ },
+                                        label = {
+                                            Text(
+                                                category.displayName,
+                                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
+                                            )
+                                        },
+                                        selected = true,
+                                        enabled = true,
+                                    )
+                                }
+
+                                if (inheritedCategories.isEmpty()) {
+                                    item {
+                                        Text(
+                                            text = "Add ingredients to see categories",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
                     }
+                }
+
+                // Tags input for basic foods, or inherited tags display for compound foods
+                if (!isCompoundFood) {
+                    OutlinedTextField(
+                        value = tagsInput,
+                        onValueChange = { tagsInput = it },
+                        label = { Text("Tags (separated by semicolon)", style = MaterialTheme.typography.bodyMedium) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        placeholder = { Text("protein-rich;breakfast;gluten-free", style = MaterialTheme.typography.bodyMedium) }
+                    )
                 }
 
                 if (!isCompoundFood) {
@@ -177,9 +244,9 @@ fun FoodInputDialog(
                                 modifier = Modifier.fillMaxWidth(),
                                 textStyle = MaterialTheme.typography.bodyMedium
                             )
-                            
+
                             Spacer(modifier = Modifier.height(8.dp))
-                            
+
                             LazyColumn {
                                 items(availableFoods) { food ->
                                     Row(
@@ -225,17 +292,17 @@ fun FoodInputDialog(
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
-                            
+
                             // Total macros display
                             CompoundFoodMacrosDisplay(selectedComponents = selectedComponents)
-                            
+
                             Spacer(modifier = Modifier.height(8.dp))
-                            
+
                             LazyColumn {
                                 items(selectedComponents.size) { index ->
                                     val component = selectedComponents[index]
                                     val componentFood = Model.foods.find { it.name == component.foodName }
-                                    
+
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -248,7 +315,7 @@ fun FoodInputDialog(
                                             modifier = Modifier.weight(2f),
                                             style = MaterialTheme.typography.bodyMedium
                                         )
-                                        
+
                                         TextField(
                                             value = component.percentage.toInt().toString(),
                                             onValueChange = { newValue ->
@@ -264,7 +331,7 @@ fun FoodInputDialog(
                                                 unfocusedIndicatorColor = Color.Transparent
                                             )
                                         )
-                                        
+
                                         // Food info display
                                         if (componentFood != null) {
                                             val macros = Model.getFoodMacros(componentFood.name)
@@ -273,7 +340,7 @@ fun FoodInputDialog(
                                                 val adjustedFats = macros.fats * component.percentage / 100
                                                 val adjustedCarbs = macros.carbs * component.percentage / 100
                                                 val adjustedWater = macros.waterMassPercentage * component.percentage / 100
-                                                
+
                                                 Text(
                                                     text = "${adjustedProteins.toInt()}%",
                                                     style = MaterialTheme.typography.bodyMedium,
@@ -300,7 +367,7 @@ fun FoodInputDialog(
                                                 )
                                             }
                                         }
-                                        
+
                                         Box(modifier = Modifier.weight(0.5f), contentAlignment = Alignment.Center) {
                                             Button(
                                                 onClick = { selectedComponents.removeAt(index) },
@@ -318,7 +385,7 @@ fun FoodInputDialog(
                                             }
                                         }
                                     }
-                                    
+
                                     if (index < selectedComponents.size - 1) {
                                         HorizontalDivider(
                                             modifier = Modifier.padding(vertical = 4.dp),
@@ -338,10 +405,17 @@ fun FoodInputDialog(
                 Button(
                     onClick = {
                         val newFood = if (!isCompoundFood) {
+                            // Parse tags from semicolon-separated input
+                            val parsedTags = tagsInput.split(";")
+                                .map { it.trim() }
+                                .filter { it.isNotBlank() }
+                                .toSet()
+
                             // Create basic food
                             Food(
                                 name = name.trim(),
-                                category = selectedCategory,
+                                categories = setOf(selectedCategory),
+                                tags = parsedTags,
                                 proteins = proteins.toFloatOrNull(),
                                 carbs = carbs.toFloatOrNull(),
                                 fats = fats.toFloatOrNull(),
@@ -349,10 +423,9 @@ fun FoodInputDialog(
                                 usageCount = food?.usageCount ?: 0
                             )
                         } else {
-                            // Create compound food
+                            // Create compound food (categories and tags will be inherited)
                             Food(
                                 name = name.trim(),
-                                category = selectedCategory,
                                 components = selectedComponents.associate { it.foodName to it.percentage },
                                 usageCount = food?.usageCount ?: 0
                             )
@@ -392,7 +465,7 @@ private fun CompoundFoodMacrosDisplay(
     val totalPercentage by remember(selectedComponents) {
         derivedStateOf { selectedComponents.sumOf { it.percentage.toDouble() }.toFloat() }
     }
-    
+
     val totalProteins by remember(selectedComponents, Model.foods) {
         derivedStateOf {
             selectedComponents.sumOf { component ->
@@ -401,7 +474,7 @@ private fun CompoundFoodMacrosDisplay(
             }.toFloat()
         }
     }
-    
+
     val totalFats by remember(selectedComponents, Model.foods) {
         derivedStateOf {
             selectedComponents.sumOf { component ->
@@ -410,7 +483,7 @@ private fun CompoundFoodMacrosDisplay(
             }.toFloat()
         }
     }
-    
+
     val totalCarbs by remember(selectedComponents, Model.foods) {
         derivedStateOf {
             selectedComponents.sumOf { component ->
@@ -419,7 +492,7 @@ private fun CompoundFoodMacrosDisplay(
             }.toFloat()
         }
     }
-    
+
     val totalWater by remember(selectedComponents, Model.foods) {
         derivedStateOf {
             selectedComponents.sumOf { component ->
@@ -472,7 +545,7 @@ private fun CompoundFoodMacrosDisplay(
         )
         Spacer(Modifier.weight(0.5f))
     }
-    
+
     HorizontalDivider(
         modifier = Modifier.padding(vertical = 8.dp),
         thickness = 2.dp,

@@ -22,6 +22,7 @@ import org.example.project.model.Meal
 import org.example.project.model.Model
 import org.example.project.view.theme.AccessibilityTypography
 import org.example.project.view.dialogs.AddMealDialog
+import org.example.project.service.MenuPrintService
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,6 +129,18 @@ fun MenusScreen() {
                         onDeleteClick = {
                             menuToDelete = menu
                             showDeleteDialog = true
+                        },
+                        onPrintClick = {
+                            scope.launch {
+                                val printService = MenuPrintService()
+                                val pdfPath = printService.generateMenuPdf(menu)
+                                val message = if (pdfPath != null) {
+                                    "PDF generated and opened: ${pdfPath.substringAfterLast("/")}"
+                                } else {
+                                    "Failed to generate PDF"
+                                }
+                                snackbarHostState.showSnackbar(message)
+                            }
                         }
                     )
                 }
@@ -310,7 +323,8 @@ fun MultiDayMenuCard(
     menu: MultiDayMenu,
     globalSelectedCell: Triple<String, Int, Int>?,
     onCellClick: (Int, Int, Meal?) -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onPrintClick: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
@@ -339,13 +353,25 @@ fun MultiDayMenuCard(
                     )
                 }
                 
-                Button(
-                    onClick = onDeleteClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Delete")
+                    Button(
+                        onClick = onPrintClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Text("Print")
+                    }
+                    Button(
+                        onClick = onDeleteClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Delete")
+                    }
                 }
             }
 

@@ -33,6 +33,8 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
+            implementation("com.openhtmltopdf:openhtmltopdf-slf4j:1.0.10")
         }
     }
 }
