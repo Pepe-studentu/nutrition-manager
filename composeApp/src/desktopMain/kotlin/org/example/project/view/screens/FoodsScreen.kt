@@ -12,54 +12,109 @@ import kotlinx.coroutines.launch
 import org.example.project.model.Food
 import org.example.project.model.Model
 import org.example.project.view.components.FoodTable
+import org.example.project.view.components.SortState
 import org.example.project.view.dialogs.FoodInputDialog
 import org.example.project.view.theme.AccessibilityTypography
 import org.jetbrains.compose.resources.painterResource
 
+data class FoodsViewState(
+    val foods: List<Food> = emptyList(),
+    val searchQuery: String = "",
+    val activeSortColumn: String? = null,
+    val sortStates: Map<String, SortState> = emptyMap(),
+    val showInputDialog: Boolean = false,
+    val showDeleteDialog: Boolean = false,
+    val selectedFood: Food? = null,
+    val foodToDelete: Food? = null
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FoodsScreen() {
-    var showDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var foodToDelete by remember { mutableStateOf<Food?>(null) }
+    // Single source of truth for foods state
+    var viewState by remember { 
+        mutableStateOf(FoodsViewState(foods = Model.filterFoods(""))) 
+    }
 
-    var selectedFood by remember { mutableStateOf<Food?>(null) }
-
-    var searchQuery by remember { mutableStateOf("") }
-    val filteredFoods by remember(searchQuery) {
-        derivedStateOf { Model.filterFoods(searchQuery) }
+    // Update foods when search or sort changes
+    fun updateFoods(
+        searchQuery: String = viewState.searchQuery,
+        sortColumn: String? = viewState.activeSortColumn,
+        sortStates: Map<String, SortState> = viewState.sortStates
+    ) {
+        val currentSortState = sortStates[sortColumn] ?: SortState.NONE
+        val filtered = Model.filterFoods(searchQuery)
+        val sorted = if (sortColumn != null && currentSortState != SortState.NONE) {
+            Model.sortFoods(
+                foods = filtered,
+                column = sortColumn,
+                ascending = currentSortState == SortState.ASCENDING
+            )
+        } else {
+            Model.sortFoods(foods = filtered) // Default usage sort
+        }
+        
+        viewState = viewState.copy(
+            foods = sorted,
+            searchQuery = searchQuery,
+            activeSortColumn = sortColumn,
+            sortStates = sortStates
+        )
+    }
+    
+    // Update view state helper
+    fun updateViewState(update: FoodsViewState.() -> FoodsViewState) {
+        viewState = viewState.update()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (showDialog) {
+        if (viewState.showInputDialog) {
             FoodInputDialog(
                 onDismiss = { 
-                    showDialog = false 
-                    selectedFood = null
+                    updateViewState { 
+                        copy(
+                            showInputDialog = false,
+                            selectedFood = null
+                        )
+                    }
+                    // Refresh the food list after dialog closes (food may have been added/edited)
+                    updateFoods()
                 },
                 showSnackbar = { message ->
                     scope.launch {
                         snackbarHostState.showSnackbar(message)
                     }
                 },
-                food = selectedFood
+                food = viewState.selectedFood
             )
         }
 
-        if (showDeleteDialog) {
+        if (viewState.showDeleteDialog && viewState.foodToDelete != null) {
             AlertDialog(
                 onDismissRequest = {
-                    showDeleteDialog = false
-                    foodToDelete = null
+                    updateViewState { 
+                        copy(
+                            showDeleteDialog = false,
+                            foodToDelete = null
+                        )
+                    }
                 },
                 confirmButton = {
                     Button(onClick = {
-                        val success = Model.deleteFood(foodToDelete!!.name)
-                        showDeleteDialog = false
-                        foodToDelete = null
+                        val success = Model.deleteFood(viewState.foodToDelete!!.name)
+                        updateViewState { 
+                            copy(
+                                showDeleteDialog = false,
+                                foodToDelete = null
+                            )
+                        }
+                        if (success) {
+                            // Refresh the food list after deletion
+                            updateFoods()
+                        }
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 if (success) "Food deleted"
@@ -72,21 +127,27 @@ fun FoodsScreen() {
                 },
                 dismissButton = {
                     Button(onClick = {
-                        showDeleteDialog = false
-                        foodToDelete = null
+                        updateViewState { 
+                            copy(
+                                showDeleteDialog = false,
+                                foodToDelete = null
+                            )
+                        }
                     }) {
                         Text("Cancel")
                     }
                 },
                 title = { Text("Confirm Deletion") },
-                text = { Text("Are you sure you want to delete ${foodToDelete?.name}?") }
+                text = { Text("Are you sure you want to delete ${viewState.foodToDelete!!.name}?") }
             )
         }
 
         Column {
             OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+                value = viewState.searchQuery,
+                onValueChange = { newQuery ->
+                    updateFoods(searchQuery = newQuery)
+                },
                 label = { Text("Search Foods", style = AccessibilityTypography.bodyLarge) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -96,14 +157,42 @@ fun FoodsScreen() {
             )
 
             FoodTable(
-                foods = filteredFoods,
+                foods = viewState.foods,
+                activeSortColumn = viewState.activeSortColumn,
+                sortStates = viewState.sortStates,
+                onHeaderClick = { columnName ->
+                    val currentState = viewState.sortStates[columnName] ?: SortState.NONE
+                    val nextState = when (currentState) {
+                        SortState.NONE -> SortState.ASCENDING
+                        SortState.ASCENDING -> SortState.DESCENDING
+                        SortState.DESCENDING -> SortState.NONE
+                    }
+                    
+                    val newSortStates = viewState.sortStates.toMutableMap()
+                    newSortStates[columnName] = nextState
+                    
+                    val newActiveSortColumn = if (nextState == SortState.NONE) null else columnName
+                    
+                    updateFoods(
+                        sortColumn = newActiveSortColumn,
+                        sortStates = newSortStates
+                    )
+                },
                 onEditClick = { food ->
-                    selectedFood = food
-                    showDialog = true
+                    updateViewState { 
+                        copy(
+                            selectedFood = food,
+                            showInputDialog = true
+                        )
+                    }
                 },
                 onDeleteClick = { food ->
-                    foodToDelete = food
-                    showDeleteDialog = true
+                    updateViewState { 
+                        copy(
+                            foodToDelete = food,
+                            showDeleteDialog = true
+                        )
+                    }
                 }
             )
         }
@@ -113,7 +202,9 @@ fun FoodsScreen() {
         }
 
         FloatingActionButton(
-            onClick = { showDialog = true },
+            onClick = { 
+                updateViewState { copy(showInputDialog = true) }
+            },
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
         ) {
             Icon(painterResource(Res.drawable.add), contentDescription = "Add Food")

@@ -8,12 +8,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinprojecttest.composeapp.generated.resources.Res
+import kotlinprojecttest.composeapp.generated.resources.arrow_drop_down_24px
+import kotlinprojecttest.composeapp.generated.resources.arrow_drop_up_24px
 import org.example.project.model.Food
 import org.example.project.model.Model
 import org.example.project.view.theme.AccessibilityTypography
 import org.example.project.view.theme.Black
+import org.jetbrains.compose.resources.painterResource
+
+enum class SortState { NONE, ASCENDING, DESCENDING }
+
 
 @Composable
 fun ShowFoodComponents(food: Food, indentLevel: Int) {
@@ -50,48 +58,99 @@ fun ShowFoodComponents(food: Food, indentLevel: Int) {
 }
 
 @Composable
-fun FoodsHeader() {
+fun SortableHeaderCell(
+    text: String,
+    isActive: Boolean,
+    sortState: SortState,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = modifier
+            .clickable { onClick() }
+            .padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = text,
+            style = AccessibilityTypography.headlineLarge,
+            color = Black,
+            modifier = Modifier.weight(1f)
+        )
+        if (isActive) {
+            when (sortState) {
+                SortState.ASCENDING -> Icon(
+                    painter = painterResource(Res.drawable.arrow_drop_up_24px),
+                    contentDescription = "Ascending",
+                    modifier = Modifier.size(16.dp),
+                    tint = Black
+                )
+                SortState.DESCENDING -> Icon(
+                    painter = painterResource(Res.drawable.arrow_drop_down_24px),
+                    contentDescription = "Descending", 
+                    modifier = Modifier.size(16.dp),
+                    tint = Black
+                )
+                SortState.NONE -> Spacer(modifier = Modifier.size(16.dp))
+            }
+        } else {
+            Spacer(modifier = Modifier.size(16.dp))
+        }
+    }
+}
+
+@Composable
+fun FoodsHeader(
+    activeSortColumn: String?,
+    sortStates: Map<String, SortState>,
+    onHeaderClick: (String) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.background) 
             .padding(vertical = 8.dp, horizontal = 16.dp)
     ) {
-        Text(
+        SortableHeaderCell(
             text = "Food",
+            isActive = activeSortColumn == "food",
+            sortState = sortStates["food"] ?: SortState.NONE,
             modifier = Modifier.weight(2.5f),
-            style = AccessibilityTypography.headlineLarge,
-            color = Black
+            onClick = { onHeaderClick("food") }
         )
-        Text(
+        SortableHeaderCell(
             text = "Protein",
+            isActive = activeSortColumn == "protein",
+            sortState = sortStates["protein"] ?: SortState.NONE,
             modifier = Modifier.weight(1f),
-            style = AccessibilityTypography.headlineLarge,
-            color = Black
+            onClick = { onHeaderClick("protein") }
         )
-        Text(
+        SortableHeaderCell(
             text = "Fat",
+            isActive = activeSortColumn == "fat",
+            sortState = sortStates["fat"] ?: SortState.NONE,
             modifier = Modifier.weight(1f),
-            style = AccessibilityTypography.headlineLarge,
-            color = Black
+            onClick = { onHeaderClick("fat") }
         )
-        Text(
+        SortableHeaderCell(
             text = "Carbs",
+            isActive = activeSortColumn == "carbs",
+            sortState = sortStates["carbs"] ?: SortState.NONE,
             modifier = Modifier.weight(1f),
-            style = AccessibilityTypography.headlineLarge,
-            color = Black
+            onClick = { onHeaderClick("carbs") }
         )
         Text(
             text = "Water %",
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(4.dp),
             style = AccessibilityTypography.headlineLarge,
             color = Black
         )
-        Text(
+        SortableHeaderCell(
             text = "Calories",
+            isActive = activeSortColumn == "calories",
+            sortState = sortStates["calories"] ?: SortState.NONE,
             modifier = Modifier.weight(1f),
-            style = AccessibilityTypography.headlineLarge,
-            color = Black
+            onClick = { onHeaderClick("calories") }
         )
     }
     HorizontalDivider(thickness = 4.dp, color = MaterialTheme.colorScheme.onBackground)
@@ -193,7 +252,10 @@ fun FoodRow(
 
 @Composable
 fun FoodTable(
-    foods: List<Food>, 
+    foods: List<Food>,
+    activeSortColumn: String?,
+    sortStates: Map<String, SortState>,
+    onHeaderClick: (String) -> Unit,
     onDeleteClick: (Food) -> Unit, 
     onEditClick: (Food) -> Unit
 ) {
@@ -206,7 +268,11 @@ fun FoodTable(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            FoodsHeader()
+            FoodsHeader(
+                activeSortColumn = activeSortColumn,
+                sortStates = sortStates,
+                onHeaderClick = onHeaderClick
+            )
             LazyColumn(
                 modifier = Modifier.fillMaxWidth()
             ) {

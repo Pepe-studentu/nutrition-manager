@@ -47,7 +47,10 @@ fun AddMealDialog(
                 var mealDescription by remember { mutableStateOf(meal?.description ?: "") }
                 var searchQuery by remember { mutableStateOf("") }
                 val filteredFoods by remember(searchQuery) {
-                    derivedStateOf { Model.filterFoods(searchQuery, allFoods) }
+                    derivedStateOf { 
+                        val frequencySortedFoods = allFoods.sortedByDescending { it.usageCount }
+                        Model.filterFoods(searchQuery, frequencySortedFoods) 
+                    }
                 }
                 val selectedFoods = remember {
                     mutableStateListOf<SizedFood>().apply {
