@@ -6,7 +6,8 @@
       "Bash(mv:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(git grep:*)"
+      "Bash(git grep:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

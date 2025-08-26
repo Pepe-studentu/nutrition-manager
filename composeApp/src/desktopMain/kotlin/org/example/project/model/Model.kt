@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.*
 import java.io.File
 import java.util.UUID
 
@@ -404,28 +405,69 @@ object Model {
         return true
     }
 
-    // Search functions
+    // Search functions with relevance scoring
     fun filterFoods(query: String, foods: List<Food> = _foods): List<Food> {
         return if (query.isBlank()) {
-            foods
+            // Default sort by usage when no search query
+            foods.sortedByDescending { it.usageCount }
         } else {
-            foods.filter { food ->
-                // Search in food name
-                food.name.contains(query, ignoreCase = true) ||
-                // Search in effective tags (includes inherited tags for compound foods)
-                food.getEffectiveTags(::getFoodByName).any { tag -> 
-                    tag.contains(query, ignoreCase = true) 
-                } ||
-                // Search in effective categories (includes inherited categories for compound foods)
-                food.getEffectiveCategories(::getFoodByName).any { category ->
-                    category.displayName.contains(query, ignoreCase = true)
-                } ||
-                // Search in component food names (for compound foods)
-                food.components.keys.any { componentName -> 
-                    componentName.contains(query, ignoreCase = true)
-                }
+            // Calculate relevance scores and sort by relevance
+            foods.mapNotNull { food ->
+                val score = calculateRelevanceScore(food, query)
+                if (score > 0) food to score else null
+            }.sortedByDescending { it.second }
+             .map { it.first }
+        }
+    }
+
+    private fun calculateRelevanceScore(food: Food, query: String): Int {
+        var score = 0
+        val lowerQuery = query.lowercase()
+        val lowerFoodName = food.name.lowercase()
+        
+        // Exact name match gets highest priority
+        if (lowerFoodName == lowerQuery) {
+            score += 100
+        } else if (lowerFoodName.startsWith(lowerQuery)) {
+            score += 50
+        } else if (lowerFoodName.contains(lowerQuery)) {
+            score += 20
+        }
+        
+        // Search in effective tags (includes inherited tags for compound foods)
+        food.getEffectiveTags(::getFoodByName).forEach { tag ->
+            val lowerTag = tag.lowercase()
+            if (lowerTag == lowerQuery) {
+                score += 30
+            } else if (lowerTag.contains(lowerQuery)) {
+                score += 10
             }
         }
+        
+        // Search in effective categories (includes inherited categories for compound foods)
+        food.getEffectiveCategories(::getFoodByName).forEach { category ->
+            val lowerCategory = category.displayName.lowercase()
+            if (lowerCategory == lowerQuery) {
+                score += 25
+            } else if (lowerCategory.contains(lowerQuery)) {
+                score += 8
+            }
+        }
+        
+        // Search in component food names (for compound foods)
+        food.components.keys.forEach { componentName ->
+            val lowerComponent = componentName.lowercase()
+            if (lowerComponent == lowerQuery) {
+                score += 15
+            } else if (lowerComponent.contains(lowerQuery)) {
+                score += 5
+            }
+        }
+        
+        // Usage count bonus (small boost for frequently used foods)
+        score += food.usageCount
+        
+        return score
     }
 
     fun filterMeals(query: String, meals: List<Meal> = _meals): List<Meal> {
@@ -444,21 +486,34 @@ object Model {
         }
     }
 
-    // Sorting functions
-    fun sortFoodsByName(ascending: Boolean = true): List<Food> {
-        return if (ascending) _foods.sortedBy { it.name }
-        else _foods.sortedByDescending { it.name }
-    }
-
-    fun sortFoodsByUsage(ascending: Boolean = false): List<Food> {
-        return if (ascending) _foods.sortedBy { it.usageCount }
-        else _foods.sortedByDescending { it.usageCount }
-    }
-
-    fun sortFoodsByCategory(): List<Food> {
-        return _foods.sortedBy { food ->
-            // Use the first category from effective categories for sorting
-            food.getEffectiveCategories(::getFoodByName).minByOrNull { it.ordinal }?.ordinal ?: Int.MAX_VALUE
+    // Synchronous sorting functions
+    fun sortFoods(
+        foods: List<Food> = _foods,
+        column: String? = null,
+        ascending: Boolean = true
+    ): List<Food> {
+        // Pre-calculate all macros once to avoid repeated calculations during sorting
+        val macrosMap = foods.associateWith { getFoodMacros(it.name) }
+        
+        val comparator: Comparator<Food> = when (column) {
+            "food" -> compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }
+            "protein" -> compareBy { macrosMap[it]?.proteins ?: 0f }
+            "fat" -> compareBy { macrosMap[it]?.fats ?: 0f }
+            "carbs" -> compareBy { macrosMap[it]?.carbs ?: 0f }
+            "calories" -> compareBy { food ->
+                macrosMap[food]?.let { it.proteins * 4 + it.carbs * 4 + it.fats * 9 } ?: 0f
+            }
+            null -> compareByDescending { it.usageCount } // NONE state = usage sort
+            else -> compareByDescending { it.usageCount } // Fallback to usage sort
+        }
+        
+        return if (column == null) {
+            // Usage sort ignores ascending flag - always descending by usage
+            foods.sortedWith(comparator)
+        } else if (ascending) {
+            foods.sortedWith(comparator)
+        } else {
+            foods.sortedWith(comparator.reversed())
         }
     }
 }
