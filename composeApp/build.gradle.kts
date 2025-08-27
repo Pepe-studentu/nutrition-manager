@@ -14,6 +14,7 @@ kotlin {
     
     sourceSets {
         val desktopMain by getting
+        val desktopTest by getting
         
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -29,6 +30,13 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
+        }
+        desktopTest.dependencies {
+            implementation("org.junit.jupiter:junit-jupiter:5.9.2")
+            implementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
+            runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -39,6 +47,20 @@ kotlin {
     }
 }
 
+// Configure tests to run sequentially due to shared Model singleton and file I/O
+tasks.withType<Test> {
+    // Force sequential execution for integration tests
+    maxParallelForks = 1
+    
+    // Enable JUnit 5 platform
+    useJUnitPlatform()
+    
+    // Verbose test output
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+    }
+}
 
 compose.desktop {
     application {

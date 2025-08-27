@@ -11,10 +11,10 @@ import java.io.File
 import java.util.UUID
 
 object Model {
-    // File storage for persistence
-    private val foodsFile = File("foods.json")
-    private val mealsFile = File("meals.json")
-    private val multiDayMenusFile = File("multi_day_menus.json")
+    // File storage for persistence - can be redirected for testing
+    private var foodsFile = File("foods.json")
+    private var mealsFile = File("meals.json")
+    private var multiDayMenusFile = File("multi_day_menus.json")
 
     // Reactive state for UI observation
     private val _foods = mutableStateListOf<Food>()
@@ -90,6 +90,26 @@ object Model {
         macroCache.clear()
         // Also clear food category/tag caches
         _foods.forEach { it.clearCache() }
+    }
+
+    // Test configuration methods - only for testing
+    fun setTestFilePaths(testFoodsFile: File, testMealsFile: File, testMultiDayMenusFile: File) {
+        foodsFile = testFoodsFile
+        mealsFile = testMealsFile
+        multiDayMenusFile = testMultiDayMenusFile
+    }
+    
+    fun clearAllData() {
+        _foods.clear()
+        _meals.clear()
+        _multiDayMenus.clear()
+        clearMacroCache()
+    }
+    
+    fun loadFromFiles() {
+        loadFoods()
+        loadMeals() 
+        loadMultiDayMenus()
     }
 
     // Persistence functions
