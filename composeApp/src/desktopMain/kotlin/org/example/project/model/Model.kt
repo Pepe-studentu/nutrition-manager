@@ -262,6 +262,7 @@ object Model {
 
         _meals.add(newMeal)
         dumpMeals(_meals)
+        dumpFoods(_foods)
         return true
     }
 
@@ -289,6 +290,7 @@ object Model {
             foods = sizedFoods
         )
         dumpMeals(_meals)
+        dumpFoods(_foods)
         return true
     }
 
@@ -315,6 +317,7 @@ object Model {
         val removed = _meals.removeIf { it.id == mealId }
         if (removed) {
             dumpMeals(_meals)
+            dumpFoods(_foods)
         }
         return removed
     }
@@ -408,8 +411,8 @@ object Model {
     // Search functions with relevance scoring
     fun filterFoods(query: String, foods: List<Food> = _foods): List<Food> {
         return if (query.isBlank()) {
-            // Default sort by usage when no search query
-            foods.sortedByDescending { it.usageCount }
+            // Return all foods without any sorting (let caller decide sorting)
+            foods
         } else {
             // Calculate relevance scores and sort by relevance
             foods.mapNotNull { food ->
@@ -426,6 +429,7 @@ object Model {
         val lowerFoodName = food.name.lowercase()
         
         // Exact name match gets highest priority
+        // claude: the first 2 cases should increase the results count
         if (lowerFoodName == lowerQuery) {
             score += 100
         } else if (lowerFoodName.startsWith(lowerQuery)) {
@@ -463,10 +467,7 @@ object Model {
                 score += 5
             }
         }
-        
-        // Usage count bonus (small boost for frequently used foods)
-        score += food.usageCount
-        
+
         return score
     }
 

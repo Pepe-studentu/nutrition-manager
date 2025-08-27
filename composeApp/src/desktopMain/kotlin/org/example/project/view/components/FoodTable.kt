@@ -20,7 +20,6 @@ import org.example.project.view.theme.AccessibilityTypography
 import org.example.project.view.theme.Black
 import org.jetbrains.compose.resources.painterResource
 
-enum class SortState { NONE, ASCENDING, DESCENDING }
 
 
 @Composable
@@ -61,7 +60,7 @@ fun ShowFoodComponents(food: Food, indentLevel: Int) {
 fun SortableHeaderCell(
     text: String,
     isActive: Boolean,
-    sortState: SortState,
+    ascending: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -73,28 +72,28 @@ fun SortableHeaderCell(
     ) {
         Text(
             text = text,
-            style = AccessibilityTypography.headlineLarge,
+            style = AccessibilityTypography.headlineMedium,
             color = Black,
             modifier = Modifier.weight(1f)
         )
         if (isActive) {
-            when (sortState) {
-                SortState.ASCENDING -> Icon(
+            if (ascending) {
+                Icon(
                     painter = painterResource(Res.drawable.arrow_drop_up_24px),
                     contentDescription = "Ascending",
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(32.dp),
                     tint = Black
                 )
-                SortState.DESCENDING -> Icon(
+            } else {
+                Icon(
                     painter = painterResource(Res.drawable.arrow_drop_down_24px),
                     contentDescription = "Descending", 
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(32.dp),
                     tint = Black
                 )
-                SortState.NONE -> Spacer(modifier = Modifier.size(16.dp))
             }
         } else {
-            Spacer(modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.size(32.dp))
         }
     }
 }
@@ -102,8 +101,9 @@ fun SortableHeaderCell(
 @Composable
 fun FoodsHeader(
     activeSortColumn: String?,
-    sortStates: Map<String, SortState>,
-    onHeaderClick: (String) -> Unit
+    sortAscending: Map<String, Boolean>,
+    onHeaderClick: (String) -> Unit,
+    searchActive: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -113,44 +113,44 @@ fun FoodsHeader(
     ) {
         SortableHeaderCell(
             text = "Food",
-            isActive = activeSortColumn == "food",
-            sortState = sortStates["food"] ?: SortState.NONE,
+            isActive = !searchActive && activeSortColumn == "food",
+            ascending = sortAscending["food"] ?: true,
             modifier = Modifier.weight(2.5f),
-            onClick = { onHeaderClick("food") }
+            onClick = { if (!searchActive) onHeaderClick("food") }
         )
         SortableHeaderCell(
             text = "Protein",
-            isActive = activeSortColumn == "protein",
-            sortState = sortStates["protein"] ?: SortState.NONE,
+            isActive = !searchActive && activeSortColumn == "protein",
+            ascending = sortAscending["protein"] ?: true,
             modifier = Modifier.weight(1f),
-            onClick = { onHeaderClick("protein") }
+            onClick = { if (!searchActive) onHeaderClick("protein") }
         )
         SortableHeaderCell(
             text = "Fat",
-            isActive = activeSortColumn == "fat",
-            sortState = sortStates["fat"] ?: SortState.NONE,
+            isActive = !searchActive && activeSortColumn == "fat",
+            ascending = sortAscending["fat"] ?: true,
             modifier = Modifier.weight(1f),
-            onClick = { onHeaderClick("fat") }
+            onClick = { if (!searchActive) onHeaderClick("fat") }
         )
         SortableHeaderCell(
             text = "Carbs",
-            isActive = activeSortColumn == "carbs",
-            sortState = sortStates["carbs"] ?: SortState.NONE,
+            isActive = !searchActive && activeSortColumn == "carbs",
+            ascending = sortAscending["carbs"] ?: true,
             modifier = Modifier.weight(1f),
-            onClick = { onHeaderClick("carbs") }
+            onClick = { if (!searchActive) onHeaderClick("carbs") }
         )
         Text(
             text = "Water %",
             modifier = Modifier.weight(1f).padding(4.dp),
-            style = AccessibilityTypography.headlineLarge,
+            style = AccessibilityTypography.headlineMedium,
             color = Black
         )
         SortableHeaderCell(
             text = "Calories",
-            isActive = activeSortColumn == "calories",
-            sortState = sortStates["calories"] ?: SortState.NONE,
-            modifier = Modifier.weight(1f),
-            onClick = { onHeaderClick("calories") }
+            isActive = !searchActive && activeSortColumn == "calories",
+            ascending = sortAscending["calories"] ?: true,
+            modifier = Modifier.weight(1.1f),
+            onClick = { if (!searchActive) onHeaderClick("calories") }
         )
     }
     HorizontalDivider(thickness = 4.dp, color = MaterialTheme.colorScheme.onBackground)
@@ -208,7 +208,7 @@ fun FoodRow(
                 )
                 val calories = macros.proteins * 4 + macros.carbs * 4 + macros.fats * 9
                 Text(
-                    text = calories.toString(),
+                    text = "%.1f".format(calories),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
@@ -254,10 +254,11 @@ fun FoodRow(
 fun FoodTable(
     foods: List<Food>,
     activeSortColumn: String?,
-    sortStates: Map<String, SortState>,
+    sortAscending: Map<String, Boolean>,
     onHeaderClick: (String) -> Unit,
     onDeleteClick: (Food) -> Unit, 
-    onEditClick: (Food) -> Unit
+    onEditClick: (Food) -> Unit,
+    searchActive: Boolean = false
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -270,8 +271,9 @@ fun FoodTable(
         ) {
             FoodsHeader(
                 activeSortColumn = activeSortColumn,
-                sortStates = sortStates,
-                onHeaderClick = onHeaderClick
+                sortAscending = sortAscending,
+                onHeaderClick = onHeaderClick,
+                searchActive = searchActive
             )
             LazyColumn(
                 modifier = Modifier.fillMaxWidth()
