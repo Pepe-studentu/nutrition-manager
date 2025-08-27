@@ -14,10 +14,17 @@ class MenuPrintService {
     fun generateMenuPdf(menu: MultiDayMenu): String? {
         return try {
             val html = generateHtmlContent(menu)
+            
+            // Create output directory in a more appropriate location
+            val outputDir = File(System.getProperty("user.home"), "NutritionApp/MenuPDFs")
+            if (!outputDir.exists()) {
+                outputDir.mkdirs()
+            }
+            
             val fileName = "menu_${menu.description.replace(Regex("[^a-zA-Z0-9]"), "_")}_${
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
             }.pdf"
-            val file = File(fileName)
+            val file = File(outputDir, fileName)
             
             FileOutputStream(file).use { outputStream ->
                 PdfRendererBuilder()

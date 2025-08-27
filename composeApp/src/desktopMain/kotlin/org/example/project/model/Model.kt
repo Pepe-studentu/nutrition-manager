@@ -45,10 +45,20 @@ object Model {
         return _multiDayMenus.find { it.id == id }
     }
 
-    // Recursive macro calculation with caching
+    // Recursive macro calculation with caching and circular dependency detection
     fun getFoodMacros(foodName: String): FoodMacros? {
+        return getFoodMacros(foodName, mutableSetOf())
+    }
+
+    private fun getFoodMacros(foodName: String, visiting: MutableSet<String>): FoodMacros? {
         if (macroCache.containsKey(foodName)) {
             return macroCache[foodName]
+        }
+
+        // Detect circular dependency
+        if (visiting.contains(foodName)) {
+            // Circular dependency detected, return zero macros to break the cycle
+            return FoodMacros(0f, 0f, 0f, 0f)
         }
 
         val food = getFoodByName(foodName) ?: return null
@@ -61,6 +71,9 @@ object Model {
                 waterMassPercentage = food.waterMassPercentage ?: 0f
             )
         } else {
+            // Add current food to visiting set to detect cycles
+            visiting.add(foodName)
+            
             // Recursively calculate macros for compound foods
             var totalProteins = 0f
             var totalCarbs = 0f
@@ -68,7 +81,7 @@ object Model {
             var totalWater = 0f
 
             for ((componentName, percentage) in food.components) {
-                val componentMacros = getFoodMacros(componentName)
+                val componentMacros = getFoodMacros(componentName, visiting)
                 if (componentMacros != null) {
                     val factor = percentage / 100f
                     totalProteins += componentMacros.proteins * factor
@@ -78,6 +91,9 @@ object Model {
                 }
             }
 
+            // Remove current food from visiting set
+            visiting.remove(foodName)
+            
             FoodMacros(totalProteins, totalCarbs, totalFats, totalWater)
         }
 
@@ -90,6 +106,44 @@ object Model {
         macroCache.clear()
         // Also clear food category/tag caches
         _foods.forEach { it.clearCache() }
+    }
+
+    // Check for circular dependencies in compound food components
+    private fun hasCircularDependency(foodName: String, components: Map<String, Float>): Boolean {
+        return hasCircularDependency(foodName, components, mutableSetOf())
+    }
+
+    private fun hasCircularDependency(
+        foodName: String, 
+        components: Map<String, Float>,
+        visiting: MutableSet<String>
+    ): Boolean {
+        // Add current food to visiting set
+        visiting.add(foodName)
+
+        for (componentName in components.keys) {
+            // If component is the same as current food, it's self-reference (direct cycle)
+            if (componentName == foodName) {
+                return true
+            }
+            
+            // If component is already being visited, it's a cycle
+            if (visiting.contains(componentName)) {
+                return true
+            }
+
+            // Check if component creates indirect cycles
+            val componentFood = getFoodByName(componentName)
+            if (componentFood != null && componentFood.isCompoundFood) {
+                if (hasCircularDependency(componentName, componentFood.components, visiting)) {
+                    return true
+                }
+            }
+        }
+
+        // Remove current food from visiting set before returning
+        visiting.remove(foodName)
+        return false
     }
 
     // Test configuration methods - only for testing
@@ -187,6 +241,11 @@ object Model {
             if (food.components.keys.any { componentName -> getFoodByName(componentName) == null }) {
                 return false // Referenced food doesn't exist
             }
+            
+            // Check for circular dependencies
+            if (hasCircularDependency(food.name, food.components)) {
+                return false // Circular dependency detected
+            }
         }
 
         _foods.add(food)
@@ -212,6 +271,11 @@ object Model {
                 componentName != updatedFood.name && getFoodByName(componentName) == null 
             }) {
                 return false
+            }
+            
+            // Check for circular dependencies
+            if (hasCircularDependency(updatedFood.name, updatedFood.components)) {
+                return false // Circular dependency detected
             }
         }
 

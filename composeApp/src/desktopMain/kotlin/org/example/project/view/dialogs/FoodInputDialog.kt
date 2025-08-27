@@ -22,7 +22,7 @@ import org.example.project.model.Model
 
 data class FoodComponent(
     val foodName: String,
-    val percentage: Float
+    val grams: Float
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,8 +63,9 @@ fun FoodInputDialog(
     val selectedComponents = remember {
         mutableStateListOf<FoodComponent>().apply {
             if (food?.isCompoundFood == true) {
+                // Convert existing percentages back to grams (assume 100g total as base)
                 addAll(food.components.map { (name, percentage) ->
-                    FoodComponent(name, percentage)
+                    FoodComponent(name, percentage) // Keep as grams equivalent
                 })
             }
         }
@@ -254,7 +255,7 @@ fun FoodInputDialog(
                                             .fillMaxWidth()
                                             .clickable {
                                                 if (selectedComponents.none { it.foodName == food.name }) {
-                                                    selectedComponents.add(FoodComponent(food.name, 10f))
+                                                    selectedComponents.add(FoodComponent(food.name, 100f))
                                                 }
                                             }
                                             .padding(8.dp),
@@ -317,14 +318,14 @@ fun FoodInputDialog(
                                         )
 
                                         TextField(
-                                            value = component.percentage.toInt().toString(),
+                                            value = component.grams.toInt().toString(),
                                             onValueChange = { newValue ->
-                                                val percentage = newValue.toFloatOrNull() ?: 0f
-                                                selectedComponents[index] = component.copy(percentage = percentage)
+                                                val grams = newValue.toFloatOrNull() ?: 0f
+                                                selectedComponents[index] = component.copy(grams = grams)
                                             },
                                             textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.End),
                                             modifier = Modifier.weight(1f),
-                                            suffix = { Text("%", style = MaterialTheme.typography.bodyMedium) },
+                                            suffix = { Text("g", style = MaterialTheme.typography.bodyMedium) },
                                             colors = TextFieldDefaults.colors(
                                                 focusedContainerColor = Color.Transparent,
                                                 unfocusedContainerColor = Color.Transparent,
@@ -336,31 +337,31 @@ fun FoodInputDialog(
                                         if (componentFood != null) {
                                             val macros = Model.getFoodMacros(componentFood.name)
                                             if (macros != null) {
-                                                val adjustedProteins = macros.proteins * component.percentage / 100
-                                                val adjustedFats = macros.fats * component.percentage / 100
-                                                val adjustedCarbs = macros.carbs * component.percentage / 100
-                                                val adjustedWater = macros.waterMassPercentage * component.percentage / 100
+                                                val adjustedProteins = macros.proteins * component.grams / 100
+                                                val adjustedFats = macros.fats * component.grams / 100
+                                                val adjustedCarbs = macros.carbs * component.grams / 100
+                                                val adjustedWater = macros.waterMassPercentage * component.grams / 100
 
                                                 Text(
-                                                    text = "${adjustedProteins.toInt()}%",
+                                                    text = "${adjustedProteins.toInt()}g",
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     modifier = Modifier.weight(1f),
                                                     textAlign = TextAlign.Right
                                                 )
                                                 Text(
-                                                    text = "${adjustedFats.toInt()}%",
+                                                    text = "${adjustedFats.toInt()}g",
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     modifier = Modifier.weight(1f),
                                                     textAlign = TextAlign.Right
                                                 )
                                                 Text(
-                                                    text = "${adjustedCarbs.toInt()}%",
+                                                    text = "${adjustedCarbs.toInt()}g",
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     modifier = Modifier.weight(1f),
                                                     textAlign = TextAlign.Right
                                                 )
                                                 Text(
-                                                    text = "${adjustedWater.toInt()}%",
+                                                    text = "${adjustedWater.toInt()}g",
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     modifier = Modifier.weight(1f),
                                                     textAlign = TextAlign.Right
@@ -423,10 +424,14 @@ fun FoodInputDialog(
                                 usageCount = food?.usageCount ?: 0
                             )
                         } else {
-                            // Create compound food (categories and tags will be inherited)
+                            // Create compound food - convert grams to percentages
+                            val totalGrams = selectedComponents.sumOf { it.grams.toDouble() }.toFloat()
+                            val componentsAsPercentages = selectedComponents.associate { component ->
+                                component.foodName to (component.grams / totalGrams * 100f)
+                            }
                             Food(
                                 name = name.trim(),
-                                components = selectedComponents.associate { it.foodName to it.percentage },
+                                components = componentsAsPercentages,
                                 usageCount = food?.usageCount ?: 0
                             )
                         }
@@ -461,16 +466,16 @@ fun FoodInputDialog(
 private fun CompoundFoodMacrosDisplay(
     selectedComponents: List<FoodComponent>
 ) {
-    // Calculate total macros from components
-    val totalPercentage by remember(selectedComponents) {
-        derivedStateOf { selectedComponents.sumOf { it.percentage.toDouble() }.toFloat() }
+    // Calculate total grams and macros from components
+    val totalGrams by remember(selectedComponents) {
+        derivedStateOf { selectedComponents.sumOf { it.grams.toDouble() }.toFloat() }
     }
 
     val totalProteins by remember(selectedComponents, Model.foods) {
         derivedStateOf {
             selectedComponents.sumOf { component ->
                 val macros = Model.getFoodMacros(component.foodName)
-                macros?.proteins?.toDouble()?.times(component.percentage / 100) ?: 0.0
+                macros?.proteins?.toDouble()?.times(component.grams / 100) ?: 0.0
             }.toFloat()
         }
     }
@@ -479,7 +484,7 @@ private fun CompoundFoodMacrosDisplay(
         derivedStateOf {
             selectedComponents.sumOf { component ->
                 val macros = Model.getFoodMacros(component.foodName)
-                macros?.fats?.toDouble()?.times(component.percentage / 100) ?: 0.0
+                macros?.fats?.toDouble()?.times(component.grams / 100) ?: 0.0
             }.toFloat()
         }
     }
@@ -488,7 +493,7 @@ private fun CompoundFoodMacrosDisplay(
         derivedStateOf {
             selectedComponents.sumOf { component ->
                 val macros = Model.getFoodMacros(component.foodName)
-                macros?.carbs?.toDouble()?.times(component.percentage / 100) ?: 0.0
+                macros?.carbs?.toDouble()?.times(component.grams / 100) ?: 0.0
             }.toFloat()
         }
     }
@@ -497,48 +502,52 @@ private fun CompoundFoodMacrosDisplay(
         derivedStateOf {
             selectedComponents.sumOf { component ->
                 val macros = Model.getFoodMacros(component.foodName)
-                macros?.waterMassPercentage?.toDouble()?.times(component.percentage / 100) ?: 0.0
+                macros?.waterMassPercentage?.toDouble()?.times(component.grams / 100) ?: 0.0
             }.toFloat()
         }
     }
+
+    // Calculate macros per 100g of final compound food
+    val proteinsPer100g = if (totalGrams > 0) totalProteins * 100 / totalGrams else 0f
+    val fatsPer100g = if (totalGrams > 0) totalFats * 100 / totalGrams else 0f
+    val carbsPer100g = if (totalGrams > 0) totalCarbs * 100 / totalGrams else 0f
+    val waterPer100g = if (totalGrams > 0) totalWater * 100 / totalGrams else 0f
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = "Total macros:",
+            text = "Total (per 100g):",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(2f)
         )
         Text(
-            text = "${totalPercentage.toInt()}%",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Right,
-            color = if (totalPercentage <= 100f) MaterialTheme.colorScheme.onSurface
-                   else MaterialTheme.colorScheme.error
-        )
-        Text(
-            text = "P:${totalProteins.toInt()}%",
+            text = "${totalGrams.toInt()}g",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Right
         )
         Text(
-            text = "F:${totalFats.toInt()}%",
+            text = "P:${proteinsPer100g.toInt()}g",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Right
         )
         Text(
-            text = "C:${totalCarbs.toInt()}%",
+            text = "F:${fatsPer100g.toInt()}g",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Right
         )
         Text(
-            text = "W:${totalWater.toInt()}%",
+            text = "C:${carbsPer100g.toInt()}g",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Right
+        )
+        Text(
+            text = "W:${waterPer100g.toInt()}g",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Right
