@@ -16,9 +16,9 @@ import org.example.project.model.Meal
 import org.example.project.model.Model
 import org.example.project.view.theme.AccessibilityTypography
 import org.example.project.view.dialogs.AddMealDialog
+import org.example.project.view.dialogs.PrintDialog
 import org.example.project.view.components.menus.MultiDayMenuInputDialog
 import org.example.project.view.components.menus.MultiDayMenuCard
-import org.example.project.service.MenuPrintService
 import org.jetbrains.compose.resources.painterResource
 
 data class MenusViewState(
@@ -30,6 +30,8 @@ data class MenusViewState(
     val showDeleteMealDialog: Boolean = false,
     val showDeleteMenuDialog: Boolean = false,
     val showCreateMenuDialog: Boolean = false,
+    val showPrintDialog: Boolean = false,
+    val menuToPrint: MultiDayMenu? = null,
     val menuToDelete: MultiDayMenu? = null,
     val mealToDelete: Meal? = null,
     val addMealContext: Triple<String, Int, Int>? = null,
@@ -110,6 +112,20 @@ fun MenusScreen() {
             )
         }
 
+        if (viewState.showPrintDialog && viewState.menuToPrint != null) {
+            PrintDialog(
+                menu = viewState.menuToPrint!!,
+                onDismiss = {
+                    updateViewState { copy(showPrintDialog = false, menuToPrint = null) }
+                },
+                showSnackbar = { message ->
+                    scope.launch {
+                        snackbarHostState.showSnackbar(message)
+                    }
+                }
+            )
+        }
+
         Column {
             OutlinedTextField(
                 value = viewState.searchQuery,
@@ -157,15 +173,11 @@ fun MenusScreen() {
                             }
                         },
                         onPrintClick = {
-                            scope.launch {
-                                val printService = MenuPrintService()
-                                val pdfPath = printService.generateMenuPdf(menu)
-                                val message = if (pdfPath != null) {
-                                    "PDF generated and opened: ${pdfPath.substringAfterLast("/")}"
-                                } else {
-                                    "Failed to generate PDF"
-                                }
-                                snackbarHostState.showSnackbar(message)
+                            updateViewState {
+                                copy(
+                                    showPrintDialog = true,
+                                    menuToPrint = menu
+                                )
                             }
                         }
                     )

@@ -11,9 +11,12 @@ import java.time.format.DateTimeFormatter
 
 class MenuPrintService {
     
-    fun generateMenuPdf(menu: MultiDayMenu): String? {
+    private val signatureManager = SignatureManager()
+    
+    fun generateMenuPdf(menu: MultiDayMenu, includeSignature: Boolean = false): String? {
         return try {
-            val html = generateHtmlContent(menu)
+            // Simple: load template, replace placeholders, generate PDF
+            val html = generateHtmlContent(menu, includeSignature)
             
             // Create output directory in a more appropriate location
             val outputDir = File(System.getProperty("user.home"), "NutritionApp/MenuPDFs")
@@ -46,10 +49,16 @@ class MenuPrintService {
         }
     }
     
-    private fun generateHtmlContent(menu: MultiDayMenu): String {
+    fun generateHtmlContent(menu: MultiDayMenu, includeSignature: Boolean = false): String {
         val template = loadTemplate()
         val content = generateTableContent(menu)
         val averages = calculateAverages(menu)
+        
+        val signatureContent = if (includeSignature) {
+            signatureManager.getSignatureTemplate() ?: ""
+        } else {
+            ""
+        }
         
         val html = template
             .replace("{{MENU_TITLE}}", escapeHtml(menu.description))
@@ -60,6 +69,7 @@ class MenuPrintService {
             .replace("{{AVG_FATS}}", averages.fats.toString())
             .replace("{{AVG_CARBS}}", averages.carbs.toString())
             .replace("{{AVG_CALORIES}}", averages.calories.toString())
+            .replace("{{SIGNATURE}}", signatureContent)
             
         return ensureXhtmlCompliance(html)
     }
@@ -77,69 +87,17 @@ class MenuPrintService {
     }
     
     private fun loadTemplate(): String {
-        // Try multiple possible resource paths
-        val possiblePaths = listOf(
-            "/menu_template.html",
-            "/templates/menu_template.html",
-            "menu_template.html"
-        )
+        val templateFile = File(System.getProperty("user.home"), "NutritionApp/menu_template.html")
         
-        for (path in possiblePaths) {
-            try {
-                val stream = this::class.java.getResourceAsStream(path)
-                if (stream != null) {
-                    return stream.bufferedReader().use { it.readText() }
-                }
-                println("Template not found at: $path")
-            } catch (e: Exception) {
-                println("Failed to load template from $path: ${e.message}")
-            }
+        return try {
+            templateFile.readText()
+        } catch (e: Exception) {
+            throw RuntimeException("Could not load menu template from ${templateFile.absolutePath}. Please ensure the template file exists.", e)
         }
-        
-        // If all paths fail, return a simple inline template
-        println("Using fallback inline template")
-        return getFallbackTemplate()
     }
     
-    private fun getFallbackTemplate(): String {
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>{{MENU_TITLE}}</title>
-            <style>
-                @page { size: A4 landscape; margin: 1cm; }
-                body { font-family: Arial, sans-serif; font-size: 10pt; }
-                .header { margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px; }
-                .header h1 { margin: 0; font-size: 18pt; }
-                .header .meta { margin: 8px 0 0 0; color: #666; }
-                table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-                th, td { border: 1px solid #333; padding: 8px; vertical-align: top; text-align: center; }
-                th { background-color: #f0f0f0; font-weight: bold; font-size: 9pt; }
-                .day-header { width: 60px; background-color: #e8e8e8; font-weight: bold; }
-                .meal-cell { width: 140px; font-size: 8pt; text-align: left; padding: 6px; }
-                .total-cell { width: 80px; font-size: 8pt; background-color: #f9f9f9; }
-                .food-item { margin-bottom: 2px; }
-                .averages { margin-top: 15px; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>Menu: {{MENU_TITLE}}</h1>
-                <div class="meta">{{DAYS_COUNT}} days total • Generated: {{GENERATION_DATE}}</div>
-            </div>
-            {{CONTENT}}
-            <div class="averages">
-                <h3>Menu Averages</h3>
-                <div>Proteins: {{AVG_PROTEINS}}% • Fats: {{AVG_FATS}}% • Carbs: {{AVG_CARBS}}% • Calories: {{AVG_CALORIES}} per day</div>
-            </div>
-        </body>
-        </html>
-        """.trimIndent()
-    }
     
-    private fun generateTableContent(menu: MultiDayMenu): String {
+    fun generateTableContent(menu: MultiDayMenu): String {
         val mealNames = listOf("Breakfast", "Snack 1", "Lunch", "Snack 2", "Dinner")
         val maxDaysPerPage = 7
         val pages = (menu.days + maxDaysPerPage - 1) / maxDaysPerPage
@@ -221,14 +179,14 @@ class MenuPrintService {
         return content.toString()
     }
     
-    private data class MenuAverages(
+    data class MenuAverages(
         val proteins: Int,
         val fats: Int, 
         val carbs: Int,
         val calories: Int
     )
     
-    private fun calculateAverages(menu: MultiDayMenu): MenuAverages {
+    fun calculateAverages(menu: MultiDayMenu): MenuAverages {
         var totalProteins = 0f
         var totalFats = 0f
         var totalCarbs = 0f
@@ -258,7 +216,7 @@ class MenuPrintService {
         }
     }
     
-    private fun escapeHtml(text: String): String {
+    fun escapeHtml(text: String): String {
         return text
             .replace("&", "&amp;")
             .replace("<", "&lt;")
