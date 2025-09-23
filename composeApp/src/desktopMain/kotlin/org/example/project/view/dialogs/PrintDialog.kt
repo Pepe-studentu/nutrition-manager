@@ -1,5 +1,6 @@
 package org.example.project.view.dialogs
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -43,7 +44,7 @@ fun PrintDialog(
     ) {
         Card(
             modifier = Modifier
-                .width(500.dp)
+                .width(600.dp)
                 .padding(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -53,8 +54,8 @@ fun PrintDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "Print Menu: ${menu.description}",
-                    style = AccessibilityTypography.headlineSmall,
+                    text = "Print: ${menu.description}",
+                    style = AccessibilityTypography.headlineMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -63,26 +64,28 @@ fun PrintDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Checkbox(
+                    Text(
+                        text = "Include signature",
+                        style = AccessibilityTypography.bodyMedium
+                    )
+                    Switch(
                         checked = includeSignature,
                         onCheckedChange = { includeSignature = it }
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Include signature section",
-                        style = AccessibilityTypography.bodyMedium
-                    )
                 }
 
-                if (includeSignature) {
+                AnimatedVisibility(includeSignature) {
+
                     Text(
                         text = "Signature file: ${signatureManager.getSignatureFilePath()}",
                         style = AccessibilityTypography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 32.dp, bottom = 8.dp)
                     )
+
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -96,14 +99,14 @@ fun PrintDialog(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Template Customization",
+                            text = "Template CSS Customization",
                             style = AccessibilityTypography.titleMedium,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         
                         Text(
-                            text = "Click 'Copy Template' to get the HTML template with real menu data. Edit the CSS styling, then paste it back and click 'Update Template'.",
-                            style = AccessibilityTypography.bodySmall,
+                            text = "Copy -> Edit CSS elsewhere -> Paste",
+                            style = AccessibilityTypography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
