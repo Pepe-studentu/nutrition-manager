@@ -15,7 +15,8 @@ object TemplateManager {
     fun generateEditableTemplate(menu: MultiDayMenu, includeSignature: Boolean = false): String {
         // Read template from file and substitute placeholders with real data
         val template = readTemplateFile()
-        val substitutedTemplate = substitutePlaceholders(template, menu, includeSignature)
+        val printService = MenuPrintService()
+        val substitutedTemplate = printService.processTemplate(template, menu, includeSignature)
         return wrapWithEditableMarkers(substitutedTemplate)
     }
     
@@ -27,29 +28,6 @@ object TemplateManager {
         }
     }
     
-    private fun substitutePlaceholders(template: String, menu: MultiDayMenu, includeSignature: Boolean = false): String {
-        val printService = MenuPrintService()
-        val content = printService.generateTableContent(menu)
-        val averages = printService.calculateAverages(menu)
-        
-        val signatureManager = SignatureManager()
-        val signatureContent = if (includeSignature) {
-            signatureManager.getSignatureTemplate() ?: ""
-        } else {
-            ""
-        }
-        
-        return template
-            .replace("{{MENU_TITLE}}", printService.escapeHtml(menu.description))
-            .replace("{{DAYS_COUNT}}", menu.days.toString())
-            .replace("{{GENERATION_DATE}}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
-            .replace("{{CONTENT}}", content)
-            .replace("{{AVG_PROTEINS}}", averages.proteins.toString())
-            .replace("{{AVG_FATS}}", averages.fats.toString())
-            .replace("{{AVG_CARBS}}", averages.carbs.toString())
-            .replace("{{AVG_CALORIES}}", averages.calories.toString())
-            .replace("{{SIGNATURE}}", signatureContent)
-    }
     
     private fun wrapWithEditableMarkers(html: String): String {
         // Find the CSS section and wrap it with editable markers

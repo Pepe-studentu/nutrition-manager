@@ -51,26 +51,44 @@ class MenuPrintService {
     
     fun generateHtmlContent(menu: MultiDayMenu, includeSignature: Boolean = false): String {
         val template = loadTemplate()
+        return processTemplate(template, menu, includeSignature)
+    }
+
+    fun processTemplate(template: String, menu: MultiDayMenu, includeSignature: Boolean = false): String {
         val content = generateTableContent(menu)
         val averages = calculateAverages(menu)
-        
+
         val signatureContent = if (includeSignature) {
             signatureManager.getSignatureTemplate() ?: ""
         } else {
             ""
         }
-        
-        val html = template
-            .replace("{{MENU_TITLE}}", escapeHtml(menu.description))
-            .replace("{{DAYS_COUNT}}", menu.days.toString())
-            .replace("{{GENERATION_DATE}}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
-            .replace("{{CONTENT}}", content)
-            .replace("{{AVG_PROTEINS}}", averages.proteins.toString())
-            .replace("{{AVG_FATS}}", averages.fats.toString())
-            .replace("{{AVG_CARBS}}", averages.carbs.toString())
-            .replace("{{AVG_CALORIES}}", averages.calories.toString())
-            .replace("{{SIGNATURE}}", signatureContent)
-            
+
+        var html = template
+
+        // Replace mandatory placeholders
+        html = html.replace("{{MENU_TITLE}}", escapeHtml(menu.description))
+        html = html.replace("{{DAYS_COUNT}}", menu.days.toString())
+        html = html.replace("{{GENERATION_DATE}}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
+        html = html.replace("{{CONTENT}}", content)
+
+        // Replace optional placeholders only if they exist in the template
+        if (html.contains("{{AVG_PROTEINS}}")) {
+            html = html.replace("{{AVG_PROTEINS}}", averages.proteins.toString())
+        }
+        if (html.contains("{{AVG_FATS}}")) {
+            html = html.replace("{{AVG_FATS}}", averages.fats.toString())
+        }
+        if (html.contains("{{AVG_CARBS}}")) {
+            html = html.replace("{{AVG_CARBS}}", averages.carbs.toString())
+        }
+        if (html.contains("{{AVG_CALORIES}}")) {
+            html = html.replace("{{AVG_CALORIES}}", averages.calories.toString())
+        }
+        if (html.contains("{{SIGNATURE}}")) {
+            html = html.replace("{{SIGNATURE}}", signatureContent)
+        }
+
         return ensureXhtmlCompliance(html)
     }
     
