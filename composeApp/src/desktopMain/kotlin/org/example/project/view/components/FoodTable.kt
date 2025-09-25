@@ -82,19 +82,19 @@ fun SortableHeaderCell(
                 Icon(
                     painter = painterResource(Res.drawable.arrow_drop_up_24px),
                     contentDescription = tr("ascending"),
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(28.dp),
                     tint = Black
                 )
             } else {
                 Icon(
                     painter = painterResource(Res.drawable.arrow_drop_down_24px),
                     contentDescription = tr("descending"), 
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(28.dp),
                     tint = Black
                 )
             }
         } else {
-            Spacer(modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.size(28.dp))
         }
     }
 }
@@ -244,6 +244,18 @@ fun FoodRow(
                 Button(onClick = { onDeleteClick(food) }) {
                     Text(tr("delete"))
                 }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Text(text = tr("category")+": ")
+
+                food.categories.forEach { Text(it.displayName+ " ") }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(text = tr("tags_short")+": ")
+
+                food.tags.forEach { Text("$it ") }
             }
         }
     }

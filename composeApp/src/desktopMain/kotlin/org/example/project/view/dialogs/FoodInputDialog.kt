@@ -211,7 +211,6 @@ fun FoodInputDialog(
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
                         textStyle = MaterialTheme.typography.bodyMedium,
-                        placeholder = { Text(tr("tags_placeholder"), style = MaterialTheme.typography.bodyMedium) }
                     )
                 }
 
