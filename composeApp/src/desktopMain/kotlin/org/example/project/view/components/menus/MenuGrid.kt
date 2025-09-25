@@ -19,6 +19,7 @@ import org.example.project.model.Meal
 import org.example.project.model.Model
 import org.example.project.model.MultiDayMenu
 import org.example.project.view.theme.AccessibilityTypography
+import org.example.project.service.tr
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -27,7 +28,7 @@ fun MenuGrid(
     globalSelectedCell: Triple<String, Int, Int>?,
     onCellClick: (Int, Int, Meal?) -> Unit
 ) {
-    val mealNames = listOf("Breakfast", "Snack 1", "Lunch", "Snack 2", "Dinner")
+    val mealNames = listOf(tr("breakfast"), tr("snack_1"), tr("lunch"), tr("snack_2"), tr("dinner"))
     val cellWidth = 200.dp
     val cellHeight = 120.dp
 
@@ -57,7 +58,7 @@ fun MenuGrid(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Day ${dayIndex + 1}",
+                                text = tr("day_number", dayIndex + 1),
                                 style = AccessibilityTypography.bodyMedium,
                                 textAlign = TextAlign.Center
                             )
@@ -123,7 +124,7 @@ fun MenuGrid(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Daily Total",
+                            text = tr("daily_total"),
                             style = AccessibilityTypography.bodyMedium,
                             textAlign = TextAlign.Center
                         )
@@ -171,13 +172,13 @@ fun MealEntryCell(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.add),
-                    contentDescription = "Add meal",
+                    contentDescription = tr("add_meal"),
                     modifier = Modifier.size(32.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Add a meal",
+                    text = tr("add_a_meal"),
                     style = AccessibilityTypography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -214,7 +215,7 @@ fun DailyTotalsCell(
     ) {
         if (dailyMenu == null) {
             Text(
-                text = "No data",
+                text = tr("no_data"),
                 style = AccessibilityTypography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

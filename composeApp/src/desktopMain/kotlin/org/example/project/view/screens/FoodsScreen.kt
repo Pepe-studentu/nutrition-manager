@@ -14,6 +14,8 @@ import org.example.project.model.Model
 import org.example.project.view.components.FoodTable
 import org.example.project.view.dialogs.FoodInputDialog
 import org.example.project.view.theme.AccessibilityTypography
+import org.example.project.service.tr
+import org.example.project.service.TranslationService
 import org.jetbrains.compose.resources.painterResource
 
 data class FoodsViewState(
@@ -121,12 +123,12 @@ fun FoodsScreen() {
                         }
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                if (success) "Food deleted"
-                                else "Cannot delete: Food used elsewhere"
+                                if (success) TranslationService.getString("food_deleted")
+                                else TranslationService.getString("cannot_delete_food_in_use")
                             )
                         }
                     }) {
-                        Text("Delete")
+                        Text(tr("delete"))
                     }
                 },
                 dismissButton = {
@@ -138,11 +140,11 @@ fun FoodsScreen() {
                             )
                         }
                     }) {
-                        Text("Cancel")
+                        Text(tr("cancel"))
                     }
                 },
-                title = { Text("Confirm Deletion") },
-                text = { Text("Are you sure you want to delete ${viewState.foodToDelete!!.name}?") }
+                title = { Text(tr("delete")) },
+                text = { Text(tr("confirm_delete_food")) }
             )
         }
 
@@ -152,7 +154,7 @@ fun FoodsScreen() {
                 onValueChange = { newQuery ->
                     updateFoods(searchQuery = newQuery)
                 },
-                label = { Text("Search Foods", style = AccessibilityTypography.bodyLarge) },
+                label = { Text(tr("search_foods"), style = AccessibilityTypography.bodyLarge) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -167,7 +169,7 @@ fun FoodsScreen() {
                 }
                 if (exactMatches > 0) {
                     Text(
-                        text = "$exactMatches results found",
+                        text = tr("results_found", exactMatches),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                         style = AccessibilityTypography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -224,7 +226,7 @@ fun FoodsScreen() {
             },
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
         ) {
-            Icon(painterResource(Res.drawable.add), contentDescription = "Add Food")
+            Icon(painterResource(Res.drawable.add), contentDescription = tr("add_food_button"))
         }
     }
 }

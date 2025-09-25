@@ -9,7 +9,9 @@
       "Bash(git grep:*)",
       "Bash(mkdir:*)",
       "WebSearch",
-      "WebSearch"
+      "WebSearch",
+      "Bash(../gradlew build)",
+      "Bash(git diff:*)"
     ],
     "deny": []
   }

@@ -116,7 +116,13 @@ class MenuPrintService {
     
     
     fun generateTableContent(menu: MultiDayMenu): String {
-        val mealNames = listOf("Breakfast", "Snack 1", "Lunch", "Snack 2", "Dinner")
+        val mealNames = listOf(
+            TranslationService.getString("breakfast"),
+            TranslationService.getString("snack_1"),
+            TranslationService.getString("lunch"),
+            TranslationService.getString("snack_2"),
+            TranslationService.getString("dinner")
+        )
         val maxDaysPerPage = 7
         val pages = (menu.days + maxDaysPerPage - 1) / maxDaysPerPage
         
@@ -135,11 +141,11 @@ class MenuPrintService {
             
             // Header row
             content.append("<tr>")
-            content.append("<th class=\"day-header\">Day</th>")
+            content.append("<th class=\"day-header\">${TranslationService.getString("pdf_day_header")}</th>")
             for (mealName in mealNames) {
                 content.append("<th class=\"meal-cell\">$mealName</th>")
             }
-            content.append("<th class=\"total-cell\">Daily Total</th>")
+            content.append("<th class=\"total-cell\">${TranslationService.getString("pdf_daily_total")}</th>")
             content.append("</tr>")
             
             // Data rows
@@ -150,7 +156,7 @@ class MenuPrintService {
                 content.append("<tr>")
                 
                 // Day header cell
-                content.append("<td class=\"day-header\">Day ${dayIndex + 1}</td>")
+                content.append("<td class=\"day-header\">${TranslationService.getString("day_number", dayIndex + 1)}</td>")
                 
                 // Meal cells
                 for (mealIndex in 0 until 5) {

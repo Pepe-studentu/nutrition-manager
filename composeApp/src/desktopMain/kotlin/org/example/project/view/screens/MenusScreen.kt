@@ -19,6 +19,8 @@ import org.example.project.view.dialogs.AddMealDialog
 import org.example.project.view.dialogs.PrintDialog
 import org.example.project.view.components.menus.MultiDayMenuInputDialog
 import org.example.project.view.components.menus.MultiDayMenuCard
+import org.example.project.service.tr
+import org.example.project.service.TranslationService
 import org.jetbrains.compose.resources.painterResource
 
 data class MenusViewState(
@@ -93,22 +95,22 @@ fun MenusScreen() {
                         }
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                if (success) "Menu deleted" else "Failed to delete menu"
+                                if (success) TranslationService.getString("menu_deleted") else TranslationService.getString("failed_to_delete_menu")
                             )
                         }
                     }) {
-                        Text("Delete")
+                        Text(tr("delete"))
                     }
                 },
                 dismissButton = {
                     Button(onClick = {
                         updateViewState { copy(showDeleteMenuDialog = false, menuToDelete = null) }
                     }) {
-                        Text("Cancel")
+                        Text(tr("cancel"))
                     }
                 },
-                title = { Text("Confirm Deletion") },
-                text = { Text("Are you sure you want to delete this menu?") }
+                title = { Text(tr("confirm_deletion")) },
+                text = { Text(tr("confirm_delete_menu")) }
             )
         }
 
@@ -132,7 +134,7 @@ fun MenusScreen() {
                 onValueChange = { newQuery ->
                     updateMenus(searchQuery = newQuery)
                 },
-                label = { Text("Search Menus", style = AccessibilityTypography.bodyLarge) },
+                label = { Text(tr("search_menus"), style = AccessibilityTypography.bodyLarge) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -272,7 +274,7 @@ fun MenusScreen() {
                             )
                         }
                     }) {
-                        Text("Remove")
+                        Text(tr("remove"))
                     }
                 },
                 dismissButton = {
@@ -285,11 +287,11 @@ fun MenusScreen() {
                             )
                         }
                     }) {
-                        Text("Cancel")
+                        Text(tr("cancel"))
                     }
                 },
-                title = { Text("Remove Meal from Menu") },
-                text = { Text("Are you sure you want to remove '${viewState.mealToDelete!!.description}' from this menu slot?") }
+                title = { Text(tr("remove_meal_from_menu")) },
+                text = { Text(tr("confirm_remove_meal")) }
             )
         }
 
@@ -331,7 +333,7 @@ fun MenusScreen() {
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("Edit")
+                        Text(tr("edit"))
                     }
                     Button(
                         onClick = { 
@@ -360,7 +362,7 @@ fun MenusScreen() {
                             containerColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Remove")
+                        Text(tr("remove"))
                     }
                     Button(
                         onClick = { /* TODO: Duplicate meal */ },
@@ -368,7 +370,7 @@ fun MenusScreen() {
                             containerColor = MaterialTheme.colorScheme.secondary
                         )
                     ) {
-                        Text("Duplicate")
+                        Text(tr("duplicate"))
                     }
                 }
             }
@@ -380,7 +382,7 @@ fun MenusScreen() {
             },
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
         ) {
-            Icon(painterResource(Res.drawable.add), contentDescription = "Add Menu")
+            Icon(painterResource(Res.drawable.add), contentDescription = tr("add_menu_button"))
         }
     }
 }

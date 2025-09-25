@@ -19,6 +19,8 @@ import org.example.project.service.TemplateManager
 import org.example.project.service.SignatureManager
 import org.example.project.service.MenuPrintService
 import org.example.project.view.theme.AccessibilityTypography
+import org.example.project.service.tr
+import org.example.project.service.TranslationService
 
 @Composable
 fun PrintDialog(
@@ -54,7 +56,7 @@ fun PrintDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "Print: ${menu.description}",
+                    text = tr("print_menu_title", menu.description),
                     style = AccessibilityTypography.headlineMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -68,7 +70,7 @@ fun PrintDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Include signature",
+                        text = tr("include_signature"),
                         style = AccessibilityTypography.bodyMedium
                     )
                     Switch(
@@ -80,7 +82,7 @@ fun PrintDialog(
                 AnimatedVisibility(includeSignature) {
 
                     Text(
-                        text = "Signature file: ${signatureManager.getSignatureFilePath()}",
+                        text = tr("signature_file", signatureManager.getSignatureFilePath()),
                         style = AccessibilityTypography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 32.dp, bottom = 8.dp)
@@ -99,13 +101,13 @@ fun PrintDialog(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Template CSS Customization",
+                            text = tr("template_css_customization"),
                             style = AccessibilityTypography.titleMedium,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         
                         Text(
-                            text = "Copy -> Edit CSS elsewhere -> Paste",
+                            text = tr("copy_paste_instruction"),
                             style = AccessibilityTypography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 12.dp)
@@ -124,9 +126,9 @@ fun PrintDialog(
                                                 val template = TemplateManager.generateEditableTemplate(menu, includeSignature)
                                                 TemplateManager.copyToClipboard(template)
                                             }
-                                            showSnackbar("Template copied to clipboard - edit CSS and paste back")
+                                            showSnackbar(TranslationService.getString("template_copied_message"))
                                         } catch (e: Exception) {
-                                            showSnackbar("Failed to generate template: ${e.message}")
+                                            showSnackbar(TranslationService.getString("failed_to_generate_template", e.message ?: ""))
                                         } finally {
                                             isGeneratingTemplate = false
                                         }
@@ -141,7 +143,7 @@ fun PrintDialog(
                                         strokeWidth = 2.dp
                                     )
                                 } else {
-                                    Text("Copy Template")
+                                    Text(tr("copy_template"))
                                 }
                             }
 
@@ -155,22 +157,22 @@ fun PrintDialog(
                                                 if (extractedCss != null) {
                                                     // Store the updated CSS for use in PDF generation
                                                     TemplateManager.updateCss(extractedCss)
-                                                    showSnackbar("Template updated successfully")
+                                                    showSnackbar(TranslationService.getString("template_updated_successfully"))
                                                 } else {
-                                                    showSnackbar("No valid CSS found in clipboard")
+                                                    showSnackbar(TranslationService.getString("no_valid_css_found"))
                                                 }
                                             } else {
-                                                showSnackbar("No content found in clipboard")
+                                                showSnackbar(TranslationService.getString("no_content_found_in_clipboard"))
                                             }
                                         } catch (e: Exception) {
-                                            showSnackbar("Failed to update template: ${e.message}")
+                                            showSnackbar(TranslationService.getString("failed_to_update_template", e.message ?: ""))
                                         }
                                     }
                                 },
                                 enabled = !isGeneratingTemplate && !isGeneratingPdf,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("Update Template")
+                                Text(tr("update_template"))
                             }
                         }
                     }
@@ -191,7 +193,7 @@ fun PrintDialog(
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     ) {
-                        Text("Cancel")
+                        Text(tr("cancel"))
                     }
 
                     Button(
@@ -203,15 +205,15 @@ fun PrintDialog(
                                         val printService = MenuPrintService()
                                         val pdfPath = printService.generateMenuPdf(menu, includeSignature)
                                         val message = if (pdfPath != null) {
-                                            "PDF generated and opened: ${pdfPath.substringAfterLast("/")}"
+                                            TranslationService.getString("pdf_generated_message", pdfPath.substringAfterLast("/"))
                                         } else {
-                                            "Failed to generate PDF"
+                                            TranslationService.getString("failed_to_generate_pdf")
                                         }
                                         showSnackbar(message)
                                     }
                                     onDismiss()
                                 } catch (e: Exception) {
-                                    showSnackbar("Failed to generate PDF: ${e.message}")
+                                    showSnackbar(TranslationService.getString("failed_to_generate_pdf"))
                                 } finally {
                                     isGeneratingPdf = false
                                 }
@@ -227,7 +229,7 @@ fun PrintDialog(
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         } else {
-                            Text("Generate PDF")
+                            Text(tr("generate_pdf"))
                         }
                     }
                 }

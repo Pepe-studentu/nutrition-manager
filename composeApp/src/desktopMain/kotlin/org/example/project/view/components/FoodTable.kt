@@ -18,6 +18,7 @@ import org.example.project.model.Food
 import org.example.project.model.Model
 import org.example.project.view.theme.AccessibilityTypography
 import org.example.project.view.theme.Black
+import org.example.project.service.tr
 import org.jetbrains.compose.resources.painterResource
 
 
@@ -35,7 +36,7 @@ fun ShowFoodComponents(food: Food, indentLevel: Int) {
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
             ) {
                 Text(
-                    text = "${percentage}% $componentName",
+                    text = "${"%.1f".format(percentage)}% $componentName",
                     modifier = Modifier.weight(2.5f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -80,14 +81,14 @@ fun SortableHeaderCell(
             if (ascending) {
                 Icon(
                     painter = painterResource(Res.drawable.arrow_drop_up_24px),
-                    contentDescription = "Ascending",
+                    contentDescription = tr("ascending"),
                     modifier = Modifier.size(32.dp),
                     tint = Black
                 )
             } else {
                 Icon(
                     painter = painterResource(Res.drawable.arrow_drop_down_24px),
-                    contentDescription = "Descending", 
+                    contentDescription = tr("descending"), 
                     modifier = Modifier.size(32.dp),
                     tint = Black
                 )
@@ -112,41 +113,41 @@ fun FoodsHeader(
             .padding(vertical = 8.dp, horizontal = 16.dp)
     ) {
         SortableHeaderCell(
-            text = "Food",
+            text = tr("food"),
             isActive = !searchActive && activeSortColumn == "food",
             ascending = sortAscending["food"] ?: true,
             modifier = Modifier.weight(2.5f),
             onClick = { if (!searchActive) onHeaderClick("food") }
         )
         SortableHeaderCell(
-            text = "Protein",
+            text = tr("protein"),
             isActive = !searchActive && activeSortColumn == "protein",
             ascending = sortAscending["protein"] ?: true,
             modifier = Modifier.weight(1f),
             onClick = { if (!searchActive) onHeaderClick("protein") }
         )
         SortableHeaderCell(
-            text = "Fat",
+            text = tr("fat"),
             isActive = !searchActive && activeSortColumn == "fat",
             ascending = sortAscending["fat"] ?: true,
             modifier = Modifier.weight(1f),
             onClick = { if (!searchActive) onHeaderClick("fat") }
         )
         SortableHeaderCell(
-            text = "Carbs",
+            text = tr("carbs"),
             isActive = !searchActive && activeSortColumn == "carbs",
             ascending = sortAscending["carbs"] ?: true,
             modifier = Modifier.weight(1f),
             onClick = { if (!searchActive) onHeaderClick("carbs") }
         )
         Text(
-            text = "Water %",
+            text = tr("water_percentage"),
             modifier = Modifier.weight(1f).padding(4.dp),
             style = AccessibilityTypography.headlineMedium,
             color = Black
         )
         SortableHeaderCell(
-            text = "Calories",
+            text = tr("calories"),
             isActive = !searchActive && activeSortColumn == "calories",
             ascending = sortAscending["calories"] ?: true,
             modifier = Modifier.weight(1.1f),
@@ -183,25 +184,25 @@ fun FoodRow(
 
             if (macros != null) {
                 Text(
-                    text = macros.proteins.toString(),
+                    text = "%.1f".format(macros.proteins),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = macros.fats.toString(),
+                    text = "%.1f".format(macros.fats),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = macros.carbs.toString(),
+                    text = "%.1f".format(macros.carbs),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = macros.waterMassPercentage.toString(),
+                    text = "%.1f".format(macros.waterMassPercentage),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
@@ -238,10 +239,10 @@ fun FoodRow(
                 horizontalArrangement = Arrangement.Start
             ) {
                 Button(onClick = { onEditClick(food) }, modifier = Modifier.padding(end = 24.dp)) {
-                    Text("Edit")
+                    Text(tr("edit"))
                 }
                 Button(onClick = { onDeleteClick(food) }) {
-                    Text("Delete")
+                    Text(tr("delete"))
                 }
             }
         }

@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import org.example.project.model.Meal
 import org.example.project.model.MultiDayMenu
 import org.example.project.view.theme.AccessibilityTypography
+import org.example.project.service.tr
 
 @Composable
 fun MultiDayMenuCard(
@@ -42,7 +43,7 @@ fun MultiDayMenuCard(
                         style = AccessibilityTypography.headlineSmall
                     )
                     Text(
-                        text = "${menu.days} days",
+                        text = "${menu.days} ${tr("days")}",
                         style = AccessibilityTypography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -57,7 +58,7 @@ fun MultiDayMenuCard(
                             containerColor = MaterialTheme.colorScheme.secondary
                         )
                     ) {
-                        Text("Print")
+                        Text(tr("print"))
                     }
                     Button(
                         onClick = onDeleteClick,
@@ -65,7 +66,7 @@ fun MultiDayMenuCard(
                             containerColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Delete")
+                        Text(tr("delete"))
                     }
                 }
             }

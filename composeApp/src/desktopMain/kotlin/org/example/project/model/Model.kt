@@ -513,7 +513,6 @@ object Model {
         val lowerFoodName = food.name.lowercase()
         
         // Exact name match gets highest priority
-        // claude: the first 2 cases should increase the results count
         if (lowerFoodName == lowerQuery) {
             score += 100
         } else if (lowerFoodName.startsWith(lowerQuery)) {

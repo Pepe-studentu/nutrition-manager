@@ -19,6 +19,8 @@ import androidx.compose.ui.window.DialogProperties
 import org.example.project.model.Food
 import org.example.project.model.FoodCategory
 import org.example.project.model.Model
+import org.example.project.service.tr
+import org.example.project.service.TranslationService
 
 data class FoodComponent(
     val foodName: String,
@@ -95,18 +97,18 @@ fun FoodInputDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = if (food == null) "Add food" else "Edit food",
+                        text = if (food == null) tr("add_food") else tr("edit_food"),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Spacer(modifier = Modifier.width(100.dp))
                     FilterChip(
                         onClick = { isCompoundFood = false },
-                        label = { Text("basic", style = MaterialTheme.typography.bodyMedium) },
+                        label = { Text(tr("basic"), style = MaterialTheme.typography.bodyMedium) },
                         selected = !isCompoundFood
                     )
                     FilterChip(
                         onClick = { isCompoundFood = true },
-                        label = { Text("compound", style = MaterialTheme.typography.bodyMedium) },
+                        label = { Text(tr("compound"), style = MaterialTheme.typography.bodyMedium) },
                         selected = isCompoundFood
                     )
                 }
@@ -121,7 +123,7 @@ fun FoodInputDialog(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("Title", style = MaterialTheme.typography.bodyMedium) },
+                        label = { Text(tr("title"), style = MaterialTheme.typography.bodyMedium) },
                         modifier = Modifier.weight(1f),
                         textStyle = MaterialTheme.typography.bodyMedium
                     )
@@ -138,7 +140,7 @@ fun FoodInputDialog(
                                 value = selectedCategory.displayName,
                                 onValueChange = { },
                                 readOnly = true,
-                                label = { Text("Category", style = MaterialTheme.typography.bodyMedium) },
+                                label = { Text(tr("category"), style = MaterialTheme.typography.bodyMedium) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                                 modifier = Modifier.menuAnchor().fillMaxWidth(),
                                 textStyle = MaterialTheme.typography.bodyMedium
@@ -188,7 +190,7 @@ fun FoodInputDialog(
                                 if (inheritedCategories.isEmpty()) {
                                     item {
                                         Text(
-                                            text = "Add ingredients to see categories",
+                                            text = tr("add_ingredients_to_see_categories"),
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -204,12 +206,12 @@ fun FoodInputDialog(
                     OutlinedTextField(
                         value = tagsInput,
                         onValueChange = { tagsInput = it },
-                        label = { Text("Tags (separated by semicolon)", style = MaterialTheme.typography.bodyMedium) },
+                        label = { Text(tr("tags"), style = MaterialTheme.typography.bodyMedium) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
                         textStyle = MaterialTheme.typography.bodyMedium,
-                        placeholder = { Text("protein-rich;breakfast;gluten-free", style = MaterialTheme.typography.bodyMedium) }
+                        placeholder = { Text(tr("tags_placeholder"), style = MaterialTheme.typography.bodyMedium) }
                     )
                 }
 
@@ -241,7 +243,7 @@ fun FoodInputDialog(
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
-                                label = { Text("Search foods", style = MaterialTheme.typography.bodyMedium) },
+                                label = { Text(tr("search_foods"), style = MaterialTheme.typography.bodyMedium) },
                                 modifier = Modifier.fillMaxWidth(),
                                 textStyle = MaterialTheme.typography.bodyMedium
                             )
@@ -289,7 +291,7 @@ fun FoodInputDialog(
                                 .padding(start = 8.dp)
                         ) {
                             Text(
-                                text = "Components:",
+                                text = tr("components"),
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
@@ -325,7 +327,7 @@ fun FoodInputDialog(
                                             },
                                             textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.End),
                                             modifier = Modifier.weight(1f),
-                                            suffix = { Text("g", style = MaterialTheme.typography.bodyMedium) },
+                                            suffix = { Text(tr("grams"), style = MaterialTheme.typography.bodyMedium) },
                                             colors = TextFieldDefaults.colors(
                                                 focusedContainerColor = Color.Transparent,
                                                 unfocusedContainerColor = Color.Transparent,
@@ -444,9 +446,9 @@ fun FoodInputDialog(
 
                         if (success) {
                             onDismiss()
-                            showSnackbar("Food ${if (food == null) "added" else "updated"} successfully")
+                            showSnackbar(TranslationService.getString(if (food == null) "food_added_successfully" else "food_updated_successfully"))
                         } else {
-                            showSnackbar("Failed to ${if (food == null) "add" else "update"} food. Check inputs.")
+                            showSnackbar(TranslationService.getString(if (food == null) "failed_to_add_food" else "failed_to_update_food"))
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -455,7 +457,7 @@ fun FoodInputDialog(
                         (isCompoundFood && selectedComponents.isNotEmpty())
                     )
                 ) {
-                    Text(if (food == null) "Add" else "Update")
+                    Text(if (food == null) tr("add") else tr("update"))
                 }
             }
         }
@@ -518,7 +520,7 @@ private fun CompoundFoodMacrosDisplay(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = "Total (per 100g):",
+            text = tr("total_per_100g"),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(2f)
         )
@@ -574,20 +576,20 @@ private fun BasicFoodContent(
     onWaterChange: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Macronutrients (per 100g)", style = MaterialTheme.typography.bodyMedium)
+        Text(tr("macronutrients_per_100g"), style = MaterialTheme.typography.bodyMedium)
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = proteins,
                 onValueChange = onProteinsChange,
-                label = { Text("Protein", style = MaterialTheme.typography.bodyMedium) },
+                label = { Text(tr("protein"), style = MaterialTheme.typography.bodyMedium) },
                 modifier = Modifier.weight(1f),
                 textStyle = MaterialTheme.typography.bodyMedium
             )
             OutlinedTextField(
                 value = carbs,
                 onValueChange = onCarbsChange,
-                label = { Text("Carbs", style = MaterialTheme.typography.bodyMedium) },
+                label = { Text(tr("carbs"), style = MaterialTheme.typography.bodyMedium) },
                 modifier = Modifier.weight(1f),
                 textStyle = MaterialTheme.typography.bodyMedium
             )
@@ -597,14 +599,14 @@ private fun BasicFoodContent(
             OutlinedTextField(
                 value = fats,
                 onValueChange = onFatsChange,
-                label = { Text("Fats", style = MaterialTheme.typography.bodyMedium) },
+                label = { Text(tr("fats"), style = MaterialTheme.typography.bodyMedium) },
                 modifier = Modifier.weight(1f),
                 textStyle = MaterialTheme.typography.bodyMedium
             )
             OutlinedTextField(
                 value = water,
                 onValueChange = onWaterChange,
-                label = { Text("Water %", style = MaterialTheme.typography.bodyMedium) },
+                label = { Text(tr("water_percentage"), style = MaterialTheme.typography.bodyMedium) },
                 modifier = Modifier.weight(1f),
                 textStyle = MaterialTheme.typography.bodyMedium
             )

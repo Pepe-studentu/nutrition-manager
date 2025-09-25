@@ -18,6 +18,8 @@ import org.example.project.model.Food
 import org.example.project.model.Meal
 import org.example.project.model.Model
 import org.example.project.model.SizedFood
+import org.example.project.service.tr
+import org.example.project.service.TranslationService
 
 @Composable
 fun AddMealDialog(
@@ -69,13 +71,13 @@ fun AddMealDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isEdit) "Edit Meal" else "Add meal to slot",
+                        text = if (isEdit) tr("edit_meal") else tr("add_meal_to_slot"),
                         style = MaterialTheme.typography.titleMedium
                     )
                     TextField(
                         value = mealDescription,
                         onValueChange = { mealDescription = it },
-                        placeholder = { Text("description") },
+                        placeholder = { Text(tr("description")) },
                         modifier = Modifier.width(200.dp),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
@@ -98,7 +100,7 @@ fun AddMealDialog(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            label = { Text("Search Foods") },
+                            label = { Text(tr("search_foods")) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
@@ -195,7 +197,7 @@ fun AddMealDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Total:",
+                                    text = tr("total"),
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.weight(2f)
                                 )
@@ -262,7 +264,7 @@ fun AddMealDialog(
                                                     selectedFoods[index] = sizedFood.copy(grams = grams)
                                                 },
                                                 textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.End),                                                modifier = Modifier.weight(1f),
-                                                suffix = { Text("g", style = MaterialTheme.typography.bodyMedium)},
+                                                suffix = { Text(tr("grams"), style = MaterialTheme.typography.bodyMedium)},
                                                 colors = TextFieldDefaults.colors(
                                                     focusedContainerColor = Color.Transparent,
                                                     unfocusedContainerColor = Color.Transparent,
@@ -336,7 +338,7 @@ fun AddMealDialog(
                 // Add/Update button
                 Button(
                     onClick = {
-                        val finalMealDescription = mealDescription.ifBlank { "none" }
+                        val finalMealDescription = mealDescription.ifBlank { TranslationService.getString("none") }
                         if (isEdit) {
                             onEditMeal(meal!!.id, finalMealDescription, selectedFoods.toList())
                         } else {
@@ -349,7 +351,7 @@ fun AddMealDialog(
                         .padding(top = 16.dp),
                     enabled = selectedFoods.isNotEmpty()
                 ) {
-                    Text(if (isEdit) "Update Meal" else "Add Meal")
+                    Text(if (isEdit) tr("update_meal") else tr("add_meal"))
                 }
             }
         }
