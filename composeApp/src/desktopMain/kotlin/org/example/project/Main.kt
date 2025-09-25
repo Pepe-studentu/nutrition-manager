@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import org.example.project.model.Model
+import org.example.project.service.TranslationService
 import org.example.project.view.App
 import org.example.project.view.theme.AppTheme
 
@@ -17,6 +18,10 @@ fun main() = application {
         Model.loadFoods()
         Model.loadMeals()
         Model.loadMultiDayMenus()
+        Model.loadSettings()
+
+        // Initialize translation service with loaded language
+        TranslationService.setLanguage(Model.settings.language)
         AppTheme { App() }
     }
 }

@@ -214,8 +214,11 @@ class ModelTest {
         assertTrue(screens.contains(Screen.Foods))
         assertTrue(screens.contains(Screen.Menus))
         
-        // Should have exactly 2 screens
-        assertEquals(2, screens.size)
+        // Should have exactly 3 screens
+        assertEquals(3, screens.size)
+
+        // Verify Settings screen exists
+        assertTrue(screens.contains(Screen.Settings))
     }
 
     @Test

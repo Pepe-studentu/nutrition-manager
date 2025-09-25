@@ -15,6 +15,7 @@ object Model {
     private var foodsFile = File("foods.json")
     private var mealsFile = File("meals.json")
     private var multiDayMenusFile = File("multi_day_menus.json")
+    private var settingsFile = File("settings.json")
 
     // Reactive state for UI observation
     private val _foods = mutableStateListOf<Food>()
@@ -25,6 +26,9 @@ object Model {
 
     private val _multiDayMenus = mutableStateListOf<MultiDayMenu>()
     val multiDayMenus: List<MultiDayMenu> get() = _multiDayMenus.toList()
+
+    // Settings state
+    var settings by mutableStateOf(Settings())
 
     // Current screen state
     var currentScreen by mutableStateOf(Screen.Foods)
@@ -162,8 +166,9 @@ object Model {
     
     fun loadFromFiles() {
         loadFoods()
-        loadMeals() 
+        loadMeals()
         loadMultiDayMenus()
+        loadSettings()
     }
 
     // Persistence functions
@@ -222,13 +227,29 @@ object Model {
         }
     }
 
+    private fun parseSettings(): Settings {
+        return if (settingsFile.exists()) {
+            Json.decodeFromString(settingsFile.readText())
+        } else {
+            Settings() // Default settings
+        }
+    }
+
     private fun dumpMultiDayMenus(menus: List<MultiDayMenu>) {
         multiDayMenusFile.writeText(Json.encodeToString(menus))
+    }
+
+    private fun dumpSettings(settings: Settings) {
+        settingsFile.writeText(Json.encodeToString(settings))
     }
 
     fun loadMultiDayMenus() {
         _multiDayMenus.clear()
         _multiDayMenus.addAll(parseMultiDayMenus())
+    }
+
+    fun loadSettings() {
+        settings = parseSettings()
     }
 
     // Food CRUD operations
@@ -599,5 +620,11 @@ object Model {
         } else {
             foods.sortedWith(comparator.reversed())
         }
+    }
+
+    // Settings operations
+    fun updateSettings(newSettings: Settings) {
+        settings = newSettings
+        dumpSettings(settings)
     }
 }

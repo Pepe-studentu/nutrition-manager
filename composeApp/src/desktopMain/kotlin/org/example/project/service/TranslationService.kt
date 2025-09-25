@@ -38,6 +38,8 @@ object TranslationService {
             // Navigation
             "foods" to "Foods",
             "menus" to "Menus",
+            "settings" to "Settings",
+            "language" to "Language",
 
             // Common actions
             "add" to "Add",
@@ -68,7 +70,6 @@ object TranslationService {
             "title" to "Title",
             "category" to "Category",
             "tags" to "Tags (separated by semicolon)",
-            "tags_placeholder" to "protein-rich;breakfast;gluten-free",
             "search_foods" to "Search foods",
             "add_ingredients_to_see_categories" to "Add ingredients to see categories",
             "macronutrients_per_100g" to "Macronutrients (per 100g)",
@@ -183,6 +184,8 @@ object TranslationService {
             // Navigation
             "foods" to "Alimente",
             "menus" to "Meniuri",
+            "settings" to "Setări",
+            "language" to "Limba",
 
             // Common actions
             "add" to "Adaugă",
@@ -199,7 +202,7 @@ object TranslationService {
             "add_menu_button" to "Adaugă Meniu",
             "confirm_deletion" to "Confirmă Ștergerea",
             "remove_meal_from_menu" to "Elimină Masa din Meniu",
-            "confirm_remove_meal" to "Ești sigur că vrei să elimini masa selectată din acest slot de meniu?",
+            "confirm_remove_meal" to "Ești sigur că vrei să elimini masa selectată?",
             "remove" to "Elimină",
             "duplicate" to "Duplică",
             "calories" to "Calorii",
@@ -213,21 +216,20 @@ object TranslationService {
             "title" to "Titlu",
             "category" to "Categorie",
             "tags" to "Etichete (separate prin punct și virgulă)",
-            "tags_placeholder" to "bogat-în-proteine;mic-dejun;fără-gluten",
             "search_foods" to "Caută alimente",
             "add_ingredients_to_see_categories" to "Adaugă ingrediente pentru a vedea categoriile",
             "macronutrients_per_100g" to "Macronutrienți (per 100g)",
-            "protein" to "Proteină",
-            "carbs" to "Carbohidrați",
-            "fat" to "Grăsime",
-            "fats" to "Grăsimi",
+            "protein" to "Proteine",
+            "carbs" to "Glucide",
+            "fat" to "Lipide",
+            "fats" to "Lipide",
             "water_percentage" to "Apă %",
             "food_added_successfully" to "Aliment adăugat cu succes",
             "food_updated_successfully" to "Aliment actualizat cu succes",
-            "failed_to_add_food" to "Eșec la adăugarea alimentului. Verifică datele introduse.",
-            "failed_to_update_food" to "Eșec la actualizarea alimentului. Verifică datele introduse.",
+            "failed_to_add_food" to "Eroare la adăugarea alimentului. Verifică datele introduse.",
+            "failed_to_update_food" to "Eroare la actualizarea alimentului. Verifică datele introduse.",
             "food_deleted" to "Aliment șters",
-            "failed_to_delete_food" to "Eșec la ștergerea alimentului",
+            "failed_to_delete_food" to "Eroare la ștergerea alimentului",
             "confirm_delete_food" to "Ești sigur că vrei să ștergi acest aliment?",
             "cannot_delete_food_in_use" to "Nu se poate șterge alimentul care este folosit în mese sau alte alimente",
             "used_in_items" to "Folosit în {0} element(e)",
@@ -244,18 +246,18 @@ object TranslationService {
             "remove" to "Elimină",
             "meal_added_successfully" to "Masă adăugată cu succes",
             "meal_updated_successfully" to "Masă actualizată cu succes",
-            "failed_to_add_meal" to "Eșec la adăugarea mesei. Verifică datele introduse.",
-            "failed_to_update_meal" to "Eșec la actualizarea mesei. Verifică datele introduse.",
+            "failed_to_add_meal" to "Eroare la adăugarea mesei. Verifică datele introduse.",
+            "failed_to_update_meal" to "Eroare la actualizarea mesei. Verifică datele introduse.",
 
             // Menu related
             "menu" to "Meniu",
             "create_menu" to "Creează Meniu",
             "menu_name" to "Numele Meniului",
-            "days" to "Zile",
+            "days" to "zile",
             "menu_created" to "Meniu creat",
-            "failed_to_create_menu" to "Eșec la crearea meniului",
+            "failed_to_create_menu" to "Eroare la crearea meniului",
             "menu_deleted" to "Meniu șters",
-            "failed_to_delete_menu" to "Eșec la ștergerea meniului",
+            "failed_to_delete_menu" to "Eroare la ștergerea meniului",
             "confirm_delete_menu" to "Ești sigur că vrei să ștergi acest meniu?",
             "breakfast" to "Mic dejun",
             "snack_1" to "Gustare 1",
@@ -277,7 +279,7 @@ object TranslationService {
             "no_valid_css_found" to "Nu s-a găsit CSS valid în clipboard",
             "no_content_found_in_clipboard" to "Nu s-a găsit conținut în clipboard",
             "generate_pdf" to "Generează PDF",
-            "failed_to_generate_pdf" to "Eșec la generarea PDF-ului",
+            "failed_to_generate_pdf" to "Eroare la generarea PDF-ului",
 
             // Sort indicators
             "ascending" to "Crescător",
@@ -298,17 +300,17 @@ object TranslationService {
             "signature_file" to "Fișier semnătură: {0}",
             "copy_paste_instruction" to "Copiază -> Editează CSS în altă parte -> Lipește",
             "template_copied_message" to "Template copiat în clipboard - editează CSS și lipește înapoi",
-            "failed_to_generate_template" to "Eșec la generarea template-ului: {0}",
-            "failed_to_update_template" to "Eșec la actualizarea template-ului: {0}",
+            "failed_to_generate_template" to "Eroare la generarea template-ului: {0}",
+            "failed_to_update_template" to "Eroare la actualizarea template-ului: {0}",
             "pdf_generated_message" to "PDF generat și deschis: {0}",
 
             // MenuDialogs strings
-            "create_multi_day_menu" to "Creează Meniu Multi-Zi",
+            "create_multi_day_menu" to "Creează Meniu",
             "description" to "Descriere",
             "number_of_days" to "Numărul de Zile",
             "create" to "Creează",
             "menu_created_successfully" to "Meniu creat cu succes",
-            "failed_to_create_menu_check_inputs" to "Eșec la crearea meniului. Verifică datele introduse.",
+            "failed_to_create_menu_check_inputs" to "Eroare la crearea meniului. Verifică datele introduse.",
 
             // Menu components strings
             "days" to "zile",
@@ -321,7 +323,7 @@ object TranslationService {
 
             // MenuPrintService strings for PDF
             "pdf_day_header" to "Ziua",
-            "pdf_daily_total" to "Total Zilnic"
+            "pdf_daily_total" to "Total zilnic"
         )
     )
 }
