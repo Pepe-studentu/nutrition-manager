@@ -32,7 +32,7 @@ fun SettingsScreen() {
             style = AccessibilityTypography.headlineMedium
         )
 
-        HorizontalDivider()
+        HorizontalDivider(thickness = 2.dp)
 
         // Language Setting Section
         Column(
@@ -78,7 +78,7 @@ fun SettingsScreen() {
             }
         }
 
-        HorizontalDivider()
+        HorizontalDivider(thickness = 2.dp)
 
         // Future settings can be added here with additional dividers
     }

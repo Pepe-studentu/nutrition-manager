@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import org.example.project.model.Model
+import org.example.project.service.DataManager
 import org.example.project.service.TranslationService
 import org.example.project.view.App
 import org.example.project.view.theme.AppTheme
@@ -15,6 +16,9 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "KotlinProjectTest",
     ) {
+        // Initialize user data directory and seed initial data if needed
+        DataManager.initializeUserData()
+
         Model.loadFoods()
         Model.loadMeals()
         Model.loadMultiDayMenus()

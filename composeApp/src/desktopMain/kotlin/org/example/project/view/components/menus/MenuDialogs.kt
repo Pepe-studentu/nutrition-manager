@@ -28,7 +28,7 @@ fun MultiDayMenuInputDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text(tr("description"), style = AccessibilityTypography.bodySmall) },
+                    label = { Text(tr("description"), style = AccessibilityTypography.bodyMedium) },
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = AccessibilityTypography.bodyLarge
                 )

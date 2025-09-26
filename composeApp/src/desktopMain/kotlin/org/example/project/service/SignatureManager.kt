@@ -54,13 +54,28 @@ class SignatureManager {
     fun getSignatureTemplate(): String? {
         return try {
             if (signatureFile.exists()) {
-                signatureFile.readText()
+                val content = signatureFile.readText()
+                // Fix image paths by converting relative paths to absolute file URLs
+                fixImagePaths(content)
             } else {
                 null
             }
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    private fun fixImagePaths(content: String): String {
+        val signaturePngFile = File(signatureDir, "signature.png")
+
+        return if (signaturePngFile.exists()) {
+            // Convert the image reference to a file URL that OpenHTMLToPDF can resolve
+            val imageUrl = signaturePngFile.toURI().toString()
+            content.replace("signature.png", imageUrl)
+        } else {
+            // If signature.png doesn't exist, remove the img tag to avoid broken images
+            content.replace(Regex("<img[^>]*src=\"signature\\.png\"[^>]*>"), "<!-- signature.png not found -->")
         }
     }
     

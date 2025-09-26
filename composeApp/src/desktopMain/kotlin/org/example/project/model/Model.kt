@@ -7,15 +7,16 @@ import androidx.compose.runtime.mutableStateOf
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.coroutines.*
+import org.example.project.service.DataManager
 import java.io.File
 import java.util.UUID
 
 object Model {
-    // File storage for persistence - can be redirected for testing
-    private var foodsFile = File("foods.json")
-    private var mealsFile = File("meals.json")
-    private var multiDayMenusFile = File("multi_day_menus.json")
-    private var settingsFile = File("settings.json")
+    // File storage for persistence - managed by DataManager
+    private var foodsFile = DataManager.foodsFile
+    private var mealsFile = DataManager.mealsFile
+    private var multiDayMenusFile = DataManager.multiDayMenusFile
+    private var settingsFile = DataManager.settingsFile
 
     // Reactive state for UI observation
     private val _foods = mutableStateListOf<Food>()
