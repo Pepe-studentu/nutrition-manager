@@ -173,7 +173,13 @@ class MenuPrintService {
                     content.append("<td class=\"meal-cell\">")
                     if (meal != null) {
                         for (sizedFood in meal.foods) {
-                            content.append("<div class=\"food-item\">${sizedFood.grams.toInt()}g ${escapeHtml(sizedFood.foodName)}</div>")
+                            val food = Model.getFoodByName(sizedFood.foodName)
+                            val foodNameFormatted = if (food != null && AllergenService.isAllergenFood(food)) {
+                                "<strong>${escapeHtml(sizedFood.foodName)}</strong>"
+                            } else {
+                                escapeHtml(sizedFood.foodName)
+                            }
+                            content.append("<div class=\"food-item\">${sizedFood.grams.toInt()}g $foodNameFormatted</div>")
                         }
                     }
                     content.append("</td>")

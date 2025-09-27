@@ -20,11 +20,17 @@ class DataManager {
         // User data directory - safe from app updates
         private val userDataDir = File(System.getProperty("user.home"), "NutritionApp/data")
 
+        // Main NutritionApp directory for user-accessible files
+        private val nutritionAppDir = File(System.getProperty("user.home"), "NutritionApp")
+
         // Data files in user directory
         val foodsFile = File(userDataDir, "foods.json")
         val mealsFile = File(userDataDir, "meals.json")
         val multiDayMenusFile = File(userDataDir, "multi_day_menus.json")
         val settingsFile = File(userDataDir, "settings.json")
+
+        // User-editable files in main directory
+        val allergensFile = File(nutritionAppDir, "allergens.txt")
 
         // Resource path for initial foods data
         private const val INITIAL_FOODS = "initial_foods.json"
@@ -35,7 +41,9 @@ class DataManager {
          */
         fun initializeUserData() {
             ensureUserDataDirectoryExists()
-            seedInitialDataIfNeeded()
+            ensureNutritionAppDirectoryExists()
+            seedInitialFoodsIfNeeded()
+            ensureAllergensFileExists()
         }
 
         private fun ensureUserDataDirectoryExists() {
@@ -45,22 +53,38 @@ class DataManager {
             }
         }
 
-        private fun seedInitialDataIfNeeded() {
-            // Only seed if no user data exists yet (first run or clean install)
-            if (!hasExistingUserData()) {
-                println("First run detected - seeding initial data...")
-                seedInitialData()
-            } else {
-                println("Existing user data found - preserving user data")
+        private fun ensureNutritionAppDirectoryExists() {
+            if (!nutritionAppDir.exists()) {
+                nutritionAppDir.mkdirs()
+                println("Created NutritionApp directory: ${nutritionAppDir.absolutePath}")
             }
         }
 
-        private fun hasExistingUserData(): Boolean {
-            // Consider user data exists if foods.json exists (main indicator)
-            return foodsFile.exists()
+        private fun seedInitialFoodsIfNeeded() {
+            if (!foodsFile.exists()) {
+                println("First run detected - seeding initial foods...")
+                seedInitialFoodsData()
+            }
         }
 
-        private fun seedInitialData() {
+        private fun ensureAllergensFileExists() {
+            if (!allergensFile.exists()) {
+                val defaultAllergens = listOf(
+                    "gluten",
+                    "lactose",
+                    "nuts",
+                    "eggs",
+                    "soy",
+                    "mustard",
+                    "shellfish"
+                )
+                allergensFile.writeText(defaultAllergens.joinToString("\n"))
+                // Refresh allergen cache since we just created the file
+                AllergenService.refreshAllergens()
+            }
+        }
+
+        private fun seedInitialFoodsData() {
             try {
                 // Try to copy initial foods.json from resources
                 copyResourceToFile(INITIAL_FOODS, foodsFile)

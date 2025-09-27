@@ -11,8 +11,8 @@ import org.example.project.view.App
 import org.example.project.view.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun main() = application {
-    // Initialize user data directory and seed initial data if needed
+fun main() {
+    // Initialize user data directory and seed initial data if needed - BEFORE composable
     DataManager.initializeUserData()
 
     Model.loadFoods()
@@ -23,10 +23,12 @@ fun main() = application {
     // Initialize translation service with loaded language
     TranslationService.setLanguage(Model.settings.language)
 
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "KotlinProjectTest",
-    ) {
-        AppTheme { App() }
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "KotlinProjectTest",
+        ) {
+            AppTheme { App() }
+        }
     }
 }
