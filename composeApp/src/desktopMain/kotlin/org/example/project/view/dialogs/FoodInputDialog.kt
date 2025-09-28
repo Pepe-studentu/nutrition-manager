@@ -61,9 +61,26 @@ fun FoodInputDialog(
 
     // Compound food fields
     var searchQuery by remember { mutableStateOf("") }
-    val availableFoods by remember(searchQuery) {
+
+    // Smart parsing for "110g potatoes" format
+    val gramPattern = """^(\d+(?:\.\d+)?)\s*g?\s+(.+)""".toRegex()
+    val parsedInput by remember(searchQuery) {
         derivedStateOf {
-            Model.filterFoods(searchQuery).filter { it.name != name } // Don't allow self-reference
+            val match = gramPattern.matchEntire(searchQuery.trim())
+            if (match != null) {
+                val grams = match.groupValues[1].toFloatOrNull() ?: 100f
+                val foodName = match.groupValues[2].trim()
+                Pair(grams, foodName)
+            } else {
+                Pair(100f, searchQuery.trim()) // Default 100g if no grams specified
+            }
+        }
+    }
+
+    val availableFoods by remember(parsedInput) {
+        derivedStateOf {
+            val (_, foodName) = parsedInput
+            Model.filterFoods(foodName).filter { it.name != name } // Don't allow self-reference
         }
     }
     val selectedComponents = remember {
@@ -88,13 +105,22 @@ fun FoodInputDialog(
                 .fillMaxWidth(0.9f)
                 .fillMaxHeight(0.8f)
                 .onPreviewKeyEvent { keyEvent ->
-                    // Only handle keyboard navigation for basic food form
-                    if (!isCompoundFood && keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Tab) {
-                        focusManager.moveFocus(
-                            if (keyEvent.isShiftPressed) FocusDirection.Previous
-                            else FocusDirection.Next
-                        )
-                        true
+                    if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Tab) {
+                        if (!isCompoundFood) {
+                            // Basic food form: full Tab navigation
+                            focusManager.moveFocus(
+                                if (keyEvent.isShiftPressed) FocusDirection.Previous
+                                else FocusDirection.Next
+                            )
+                            true
+                        } else {
+                            // Compound food form: limited navigation (Name → Search)
+                            focusManager.moveFocus(
+                                if (keyEvent.isShiftPressed) FocusDirection.Previous
+                                else FocusDirection.Next
+                            )
+                            true
+                        }
                     } else false
                 }
                 .focusable(),
@@ -260,7 +286,21 @@ fun FoodInputDialog(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
                                 label = { Text(tr("search_foods"), style = MaterialTheme.typography.bodyMedium) },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onPreviewKeyEvent { keyEvent ->
+                                        if (keyEvent.type == KeyEventType.KeyDown &&
+                                            (keyEvent.key == Key.Enter || keyEvent.key == Key.Tab) &&
+                                            availableFoods.isNotEmpty() && searchQuery.isNotBlank()) {
+                                            val firstFood = availableFoods.first()
+                                            val (grams, _) = parsedInput
+                                            if (selectedComponents.none { it.foodName == firstFood.name }) {
+                                                selectedComponents.add(FoodComponent(firstFood.name, grams))
+                                            }
+                                            searchQuery = "" // Clear search field
+                                            true
+                                        } else false
+                                    },
                                 textStyle = MaterialTheme.typography.bodyMedium
                             )
 

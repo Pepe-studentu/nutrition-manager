@@ -1,9 +1,13 @@
 package org.example.project.view.components.menus
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import org.example.project.model.Model
 import org.example.project.view.theme.AccessibilityTypography
@@ -17,13 +21,25 @@ fun MultiDayMenuInputDialog(
 ) {
     var description by remember { mutableStateOf("") }
     var days by remember { mutableStateOf("7") }
+    val focusManager = LocalFocusManager.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(tr("create_multi_day_menu"), style = AccessibilityTypography.headlineSmall) },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .onPreviewKeyEvent { keyEvent ->
+                        if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Tab) {
+                            focusManager.moveFocus(
+                                if (keyEvent.isShiftPressed) FocusDirection.Previous
+                                else FocusDirection.Next
+                            )
+                            true
+                        } else false
+                    }
+                    .focusable()
             ) {
                 OutlinedTextField(
                     value = description,
