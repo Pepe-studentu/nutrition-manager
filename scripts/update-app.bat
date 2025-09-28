@@ -9,8 +9,8 @@ REM ========================================
 title Nutrition App Updater
 
 REM Configuration - Update these for your specific GitHub repository
-set GITHUB_USER=YourGitHubUsername
-set GITHUB_REPO=NutritionApp
+set GITHUB_USER=Pepe-studentu
+set GITHUB_REPO=nutrition-manager
 set APP_NAME=KotlinProjectTest
 
 REM Installation directory (default: Program Files)

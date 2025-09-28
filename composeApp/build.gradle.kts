@@ -1,17 +1,16 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.composeHotReload)
-    alias(libs.plugins.kotlin.serialization)
+    id("org.jetbrains.kotlin.multiplatform") version libs.versions.kotlin.get()
+    id("org.jetbrains.kotlin.plugin.compose") version libs.versions.kotlin.get()
+    id("org.jetbrains.kotlin.plugin.serialization") version libs.versions.kotlin.get()
+    id("org.jetbrains.compose") version libs.versions.composeMultiplatform.get()
+    // Hot reload temporarily disabled for stability
 }
 
 kotlin {
     jvm("desktop")
-    
+
     sourceSets {
         val desktopMain by getting
         val desktopTest by getting
@@ -47,6 +46,8 @@ kotlin {
     }
 }
 
+// Removed forced resolution strategy - let Gradle resolve compatible versions naturally
+
 // Configure tests to run sequentially due to shared Model singleton and file I/O
 tasks.withType<Test> {
     // Force sequential execution for integration tests
@@ -71,5 +72,99 @@ compose.desktop {
             packageName = "org.example.project"
             packageVersion = "1.0.0"
         }
+    }
+}
+
+// JFR Profiling Tasks
+tasks.register<JavaExec>("runWithJFR") {
+    group = "profiling"
+    description = "Run the application with JFR recording (60 seconds)"
+    classpath = kotlin.jvm("desktop").compilations.getByName("main").runtimeDependencyFiles + kotlin.jvm("desktop").compilations.getByName("main").output.allOutputs
+    mainClass.set("org.example.project.MainKt")
+
+    val jfrFile = layout.buildDirectory.file("reports/jfr/nutrition-app-${System.currentTimeMillis()}.jfr")
+    jvmArgs(
+        "-XX:+FlightRecorder",
+        "-XX:StartFlightRecording=duration=60s,filename=${jfrFile.get().asFile.absolutePath}",
+        "-XX:FlightRecorderOptions=stackdepth=256"
+    )
+
+    doFirst {
+        jfrFile.get().asFile.parentFile.mkdirs()
+        println("JFR recording will be saved to: ${jfrFile.get().asFile.absolutePath}")
+        println("Recording for 60 seconds...")
+    }
+}
+
+tasks.register<JavaExec>("runWithJFRLong") {
+    group = "profiling"
+    description = "Run the application with JFR recording (5 minutes)"
+    classpath = kotlin.jvm("desktop").compilations.getByName("main").runtimeDependencyFiles + kotlin.jvm("desktop").compilations.getByName("main").output.allOutputs
+    mainClass.set("org.example.project.MainKt")
+
+    val jfrFile = layout.buildDirectory.file("reports/jfr/nutrition-app-long-${System.currentTimeMillis()}.jfr")
+    jvmArgs(
+        "-XX:+FlightRecorder",
+        "-XX:StartFlightRecording=duration=300s,filename=${jfrFile.get().asFile.absolutePath}",
+        "-XX:FlightRecorderOptions=stackdepth=256"
+    )
+
+    doFirst {
+        jfrFile.get().asFile.parentFile.mkdirs()
+        println("JFR recording will be saved to: ${jfrFile.get().asFile.absolutePath}")
+        println("Recording for 5 minutes...")
+    }
+}
+
+tasks.register<JavaExec>("runWithJFRManual") {
+    group = "profiling"
+    description = "Run the application with JFR enabled (manual start/stop with jcmd)"
+    classpath = kotlin.jvm("desktop").compilations.getByName("main").runtimeDependencyFiles + kotlin.jvm("desktop").compilations.getByName("main").output.allOutputs
+    mainClass.set("org.example.project.MainKt")
+
+    jvmArgs(
+        "-XX:+FlightRecorder",
+        "-XX:FlightRecorderOptions=stackdepth=256"
+    )
+
+    doFirst {
+        println("JFR enabled. Use jcmd to start/stop recordings:")
+        println("  jcmd <pid> JFR.start duration=60s filename=recording.jfr")
+        println("  jcmd <pid> JFR.stop")
+        println("  jcmd <pid> JFR.dump filename=recording.jfr")
+    }
+}
+
+tasks.register<JavaExec>("runWithJFRExceptions") {
+    group = "profiling"
+    description = "Run with JFR focused on exceptions and errors (60 seconds)"
+    classpath = kotlin.jvm("desktop").compilations.getByName("main").runtimeDependencyFiles + kotlin.jvm("desktop").compilations.getByName("main").output.allOutputs
+    mainClass.set("org.example.project.MainKt")
+
+    val jfrFile = layout.buildDirectory.file("reports/jfr/exceptions-${System.currentTimeMillis()}.jfr")
+    jvmArgs(
+        "-XX:+FlightRecorder",
+        "-XX:StartFlightRecording=duration=300s,filename=${jfrFile.get().asFile.absolutePath}",
+        "-XX:FlightRecorderOptions=stackdepth=256",
+        // Enhanced exception and class tracking
+        "-XX:+LogJavaExceptions",
+        "-XX:+TraceClassLoading",
+        "-XX:+TraceClassUnloading",
+        // Memory-efficient GC configuration
+        "-XX:+UseG1GC",
+        "-XX:+UseCompressedOops",
+        "-XX:MaxMetaspaceSize=512m",
+        "-XX:MetaspaceSize=256m",
+        "-XX:G1PeriodicGCInterval=30000",
+        // Verbose GC for analysis
+        "-XX:+PrintGCDetails",
+        "-XX:+PrintGCTimeStamps"
+    )
+
+    doFirst {
+        jfrFile.get().asFile.parentFile.mkdirs()
+        println("Exception-focused JFR recording will be saved to: ${jfrFile.get().asFile.absolutePath}")
+        println("Enhanced tracking: exceptions, class loading/unloading, GC details")
+        println("Recording for 60 seconds...")
     }
 }

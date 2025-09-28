@@ -2,10 +2,9 @@ package org.example.project.view.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Typography
 import androidx.compose.material3.Shapes
-import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -88,10 +87,9 @@ val AccessibilityShapes = Shapes(
     large = RoundedCornerShape(32.dp)
 )
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
-    MaterialExpressiveTheme(
+    MaterialTheme(
         colorScheme = highContrastColorScheme.toMaterialColorScheme(),
         typography = AccessibilityTypography,
         shapes = AccessibilityShapes,
@@ -138,18 +136,5 @@ private fun AppColors.toMaterialColorScheme() = ColorScheme(
     surfaceContainerHigh = background,
     surfaceContainerHighest = background,
     surfaceContainerLow = background,
-    surfaceContainerLowest = background,
-
-    primaryFixed = primary,
-    primaryFixedDim = primary,
-    onPrimaryFixed = onPrimary,
-    onPrimaryFixedVariant = onPrimary,
-    secondaryFixed = secondary,
-    secondaryFixedDim = secondary,
-    onSecondaryFixed = onSecondary,
-    onSecondaryFixedVariant = onSecondary,
-    tertiaryFixed = tertiary,
-    tertiaryFixedDim = tertiary,
-    onTertiaryFixed = onTertiary,
-    onTertiaryFixedVariant = onTertiary
+    surfaceContainerLowest = background
 )
