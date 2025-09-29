@@ -1,11 +1,17 @@
 [versions]
-androidx-lifecycle = "2.9.1"
-composeHotReload = "1.0.0-alpha11"
-composeMultiplatform = "1.9.0-alpha02"
-kotlinx-serialization ="1.6.3"
+kotlin = "2.0.21"
+composeMultiplatform = "1.7.0-alpha02"
+
+kotlinx-coroutines = "1.8.1"
+kotlinx-serialization = "1.7.1"
+
+androidx-lifecycle = "2.8.4"
+
+# TESTING
 junit = "4.13.2"
-kotlin = "2.2.0"
-kotlinx-coroutines = "1.10.2"
+
+
+composeHotReload = "1.0.0-alpha11"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }

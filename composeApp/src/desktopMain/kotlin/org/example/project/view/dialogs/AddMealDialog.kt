@@ -2,6 +2,7 @@ package org.example.project.view.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,7 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -18,6 +22,8 @@ import org.example.project.model.Food
 import org.example.project.model.Meal
 import org.example.project.model.Model
 import org.example.project.model.SizedFood
+import org.example.project.service.tr
+import org.example.project.service.TranslationService
 
 @Composable
 fun AddMealDialog(
@@ -32,10 +38,23 @@ fun AddMealDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        val focusManager = LocalFocusManager.current
+
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.8f),
+                .fillMaxHeight(0.8f)
+                .onPreviewKeyEvent { keyEvent ->
+                    if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Tab) {
+                        // Tab navigation: Description → Search field
+                        focusManager.moveFocus(
+                            if (keyEvent.isShiftPressed) FocusDirection.Previous
+                            else FocusDirection.Next
+                        )
+                        true
+                    } else false
+                }
+                .focusable(),
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surface
         ) {
@@ -46,10 +65,27 @@ fun AddMealDialog(
             ) {
                 var mealDescription by remember { mutableStateOf(meal?.description ?: "") }
                 var searchQuery by remember { mutableStateOf("") }
-                val filteredFoods by remember(searchQuery) {
-                    derivedStateOf { 
+
+                // Smart parsing for "110g potatoes" format
+                val gramPattern = """^(\d+(?:\.\d+)?)\s*g?\s+(.+)""".toRegex()
+                val parsedInput by remember(searchQuery) {
+                    derivedStateOf {
+                        val match = gramPattern.matchEntire(searchQuery.trim())
+                        if (match != null) {
+                            val grams = match.groupValues[1].toFloatOrNull() ?: 100f
+                            val foodName = match.groupValues[2].trim()
+                            Pair(grams, foodName)
+                        } else {
+                            Pair(100f, searchQuery.trim()) // Default 100g if no grams specified
+                        }
+                    }
+                }
+
+                val filteredFoods by remember(parsedInput) {
+                    derivedStateOf {
+                        val (_, foodName) = parsedInput
                         val frequencySortedFoods = allFoods.sortedByDescending { it.usageCount }
-                        Model.filterFoods(searchQuery, frequencySortedFoods) 
+                        Model.filterFoods(foodName, frequencySortedFoods)
                     }
                 }
                 val selectedFoods = remember {
@@ -69,13 +105,13 @@ fun AddMealDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isEdit) "Edit Meal" else "Add meal to slot",
+                        text = if (isEdit) tr("edit_meal") else tr("add_meal_to_slot"),
                         style = MaterialTheme.typography.titleMedium
                     )
                     TextField(
                         value = mealDescription,
                         onValueChange = { mealDescription = it },
-                        placeholder = { Text("description") },
+                        placeholder = { Text(tr("description")) },
                         modifier = Modifier.width(200.dp),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
@@ -98,10 +134,20 @@ fun AddMealDialog(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            label = { Text("Search Foods") },
+                            label = { Text(tr("search_foods")) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
+                                .onPreviewKeyEvent { keyEvent ->
+                                    if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Enter &&
+                                        filteredFoods.isNotEmpty() && searchQuery.isNotBlank()) {
+                                        val firstFood = filteredFoods.first()
+                                        val (grams, _) = parsedInput
+                                        selectedFoods.add(SizedFood(firstFood.name, grams))
+                                        searchQuery = "" // Clear search field
+                                        true
+                                    } else false
+                                }
                         )
                         LazyColumn {
                             items(filteredFoods) { food ->
@@ -195,7 +241,7 @@ fun AddMealDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Total:",
+                                    text = tr("total"),
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.weight(2f)
                                 )
@@ -262,7 +308,7 @@ fun AddMealDialog(
                                                     selectedFoods[index] = sizedFood.copy(grams = grams)
                                                 },
                                                 textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.End),                                                modifier = Modifier.weight(1f),
-                                                suffix = { Text("g", style = MaterialTheme.typography.bodyMedium)},
+                                                suffix = { Text(tr("grams"), style = MaterialTheme.typography.bodyMedium)},
                                                 colors = TextFieldDefaults.colors(
                                                     focusedContainerColor = Color.Transparent,
                                                     unfocusedContainerColor = Color.Transparent,
@@ -336,7 +382,7 @@ fun AddMealDialog(
                 // Add/Update button
                 Button(
                     onClick = {
-                        val finalMealDescription = mealDescription.ifBlank { "none" }
+                        val finalMealDescription = mealDescription.ifBlank { TranslationService.getString("none") }
                         if (isEdit) {
                             onEditMeal(meal!!.id, finalMealDescription, selectedFoods.toList())
                         } else {
@@ -349,7 +395,7 @@ fun AddMealDialog(
                         .padding(top = 16.dp),
                     enabled = selectedFoods.isNotEmpty()
                 ) {
-                    Text(if (isEdit) "Update Meal" else "Add Meal")
+                    Text(if (isEdit) tr("update_meal") else tr("add_meal"))
                 }
             }
         }

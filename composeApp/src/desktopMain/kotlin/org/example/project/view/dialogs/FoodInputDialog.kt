@@ -2,6 +2,7 @@ package org.example.project.view.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -10,7 +11,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -19,10 +23,12 @@ import androidx.compose.ui.window.DialogProperties
 import org.example.project.model.Food
 import org.example.project.model.FoodCategory
 import org.example.project.model.Model
+import org.example.project.service.tr
+import org.example.project.service.TranslationService
 
 data class FoodComponent(
     val foodName: String,
-    val percentage: Float
+    val grams: Float
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,16 +61,34 @@ fun FoodInputDialog(
 
     // Compound food fields
     var searchQuery by remember { mutableStateOf("") }
-    val availableFoods by remember(searchQuery) {
+
+    // Smart parsing for "110g potatoes" format
+    val gramPattern = """^(\d+(?:\.\d+)?)\s*g?\s+(.+)""".toRegex()
+    val parsedInput by remember(searchQuery) {
         derivedStateOf {
-            Model.filterFoods(searchQuery).filter { it.name != name } // Don't allow self-reference
+            val match = gramPattern.matchEntire(searchQuery.trim())
+            if (match != null) {
+                val grams = match.groupValues[1].toFloatOrNull() ?: 100f
+                val foodName = match.groupValues[2].trim()
+                Pair(grams, foodName)
+            } else {
+                Pair(100f, searchQuery.trim()) // Default 100g if no grams specified
+            }
+        }
+    }
+
+    val availableFoods by remember(parsedInput) {
+        derivedStateOf {
+            val (_, foodName) = parsedInput
+            Model.filterFoods(foodName).filter { it.name != name } // Don't allow self-reference
         }
     }
     val selectedComponents = remember {
         mutableStateListOf<FoodComponent>().apply {
             if (food?.isCompoundFood == true) {
+                // Convert existing percentages back to grams (assume 100g total as base)
                 addAll(food.components.map { (name, percentage) ->
-                    FoodComponent(name, percentage)
+                    FoodComponent(name, percentage) // Keep as grams equivalent
                 })
             }
         }
@@ -74,10 +98,32 @@ fun FoodInputDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        val focusManager = LocalFocusManager.current
+
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.8f),
+                .fillMaxHeight(0.8f)
+                .onPreviewKeyEvent { keyEvent ->
+                    if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Tab) {
+                        if (!isCompoundFood) {
+                            // Basic food form: full Tab navigation
+                            focusManager.moveFocus(
+                                if (keyEvent.isShiftPressed) FocusDirection.Previous
+                                else FocusDirection.Next
+                            )
+                            true
+                        } else {
+                            // Compound food form: limited navigation (Name → Search)
+                            focusManager.moveFocus(
+                                if (keyEvent.isShiftPressed) FocusDirection.Previous
+                                else FocusDirection.Next
+                            )
+                            true
+                        }
+                    } else false
+                }
+                .focusable(),
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surface
         ) {
@@ -94,18 +140,18 @@ fun FoodInputDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = if (food == null) "Add food" else "Edit food",
+                        text = if (food == null) tr("add_food") else tr("edit_food"),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Spacer(modifier = Modifier.width(100.dp))
                     FilterChip(
                         onClick = { isCompoundFood = false },
-                        label = { Text("basic", style = MaterialTheme.typography.bodyMedium) },
+                        label = { Text(tr("basic"), style = MaterialTheme.typography.bodyMedium) },
                         selected = !isCompoundFood
                     )
                     FilterChip(
                         onClick = { isCompoundFood = true },
-                        label = { Text("compound", style = MaterialTheme.typography.bodyMedium) },
+                        label = { Text(tr("compound"), style = MaterialTheme.typography.bodyMedium) },
                         selected = isCompoundFood
                     )
                 }
@@ -120,7 +166,7 @@ fun FoodInputDialog(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("Title", style = MaterialTheme.typography.bodyMedium) },
+                        label = { Text(tr("title"), style = MaterialTheme.typography.bodyMedium) },
                         modifier = Modifier.weight(1f),
                         textStyle = MaterialTheme.typography.bodyMedium
                     )
@@ -137,7 +183,7 @@ fun FoodInputDialog(
                                 value = selectedCategory.displayName,
                                 onValueChange = { },
                                 readOnly = true,
-                                label = { Text("Category", style = MaterialTheme.typography.bodyMedium) },
+                                label = { Text(tr("category"), style = MaterialTheme.typography.bodyMedium) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                                 modifier = Modifier.menuAnchor().fillMaxWidth(),
                                 textStyle = MaterialTheme.typography.bodyMedium
@@ -187,7 +233,7 @@ fun FoodInputDialog(
                                 if (inheritedCategories.isEmpty()) {
                                     item {
                                         Text(
-                                            text = "Add ingredients to see categories",
+                                            text = tr("add_ingredients_to_see_categories"),
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -203,12 +249,11 @@ fun FoodInputDialog(
                     OutlinedTextField(
                         value = tagsInput,
                         onValueChange = { tagsInput = it },
-                        label = { Text("Tags (separated by semicolon)", style = MaterialTheme.typography.bodyMedium) },
+                        label = { Text(tr("tags"), style = MaterialTheme.typography.bodyMedium) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
                         textStyle = MaterialTheme.typography.bodyMedium,
-                        placeholder = { Text("protein-rich;breakfast;gluten-free", style = MaterialTheme.typography.bodyMedium) }
                     )
                 }
 
@@ -240,8 +285,22 @@ fun FoodInputDialog(
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
-                                label = { Text("Search foods", style = MaterialTheme.typography.bodyMedium) },
-                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text(tr("search_foods"), style = MaterialTheme.typography.bodyMedium) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onPreviewKeyEvent { keyEvent ->
+                                        if (keyEvent.type == KeyEventType.KeyDown &&
+                                            (keyEvent.key == Key.Enter || keyEvent.key == Key.Tab) &&
+                                            availableFoods.isNotEmpty() && searchQuery.isNotBlank()) {
+                                            val firstFood = availableFoods.first()
+                                            val (grams, _) = parsedInput
+                                            if (selectedComponents.none { it.foodName == firstFood.name }) {
+                                                selectedComponents.add(FoodComponent(firstFood.name, grams))
+                                            }
+                                            searchQuery = "" // Clear search field
+                                            true
+                                        } else false
+                                    },
                                 textStyle = MaterialTheme.typography.bodyMedium
                             )
 
@@ -254,7 +313,7 @@ fun FoodInputDialog(
                                             .fillMaxWidth()
                                             .clickable {
                                                 if (selectedComponents.none { it.foodName == food.name }) {
-                                                    selectedComponents.add(FoodComponent(food.name, 10f))
+                                                    selectedComponents.add(FoodComponent(food.name, 100f))
                                                 }
                                             }
                                             .padding(8.dp),
@@ -288,7 +347,7 @@ fun FoodInputDialog(
                                 .padding(start = 8.dp)
                         ) {
                             Text(
-                                text = "Components:",
+                                text = tr("components"),
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
@@ -317,14 +376,14 @@ fun FoodInputDialog(
                                         )
 
                                         TextField(
-                                            value = component.percentage.toInt().toString(),
+                                            value = component.grams.toInt().toString(),
                                             onValueChange = { newValue ->
-                                                val percentage = newValue.toFloatOrNull() ?: 0f
-                                                selectedComponents[index] = component.copy(percentage = percentage)
+                                                val grams = newValue.toFloatOrNull() ?: 0f
+                                                selectedComponents[index] = component.copy(grams = grams)
                                             },
                                             textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.End),
                                             modifier = Modifier.weight(1f),
-                                            suffix = { Text("%", style = MaterialTheme.typography.bodyMedium) },
+                                            suffix = { Text(tr("grams"), style = MaterialTheme.typography.bodyMedium) },
                                             colors = TextFieldDefaults.colors(
                                                 focusedContainerColor = Color.Transparent,
                                                 unfocusedContainerColor = Color.Transparent,
@@ -336,31 +395,31 @@ fun FoodInputDialog(
                                         if (componentFood != null) {
                                             val macros = Model.getFoodMacros(componentFood.name)
                                             if (macros != null) {
-                                                val adjustedProteins = macros.proteins * component.percentage / 100
-                                                val adjustedFats = macros.fats * component.percentage / 100
-                                                val adjustedCarbs = macros.carbs * component.percentage / 100
-                                                val adjustedWater = macros.waterMassPercentage * component.percentage / 100
+                                                val adjustedProteins = macros.proteins * component.grams / 100
+                                                val adjustedFats = macros.fats * component.grams / 100
+                                                val adjustedCarbs = macros.carbs * component.grams / 100
+                                                val adjustedWater = macros.waterMassPercentage * component.grams / 100
 
                                                 Text(
-                                                    text = "${adjustedProteins.toInt()}%",
+                                                    text = "${adjustedProteins.toInt()}g",
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     modifier = Modifier.weight(1f),
                                                     textAlign = TextAlign.Right
                                                 )
                                                 Text(
-                                                    text = "${adjustedFats.toInt()}%",
+                                                    text = "${adjustedFats.toInt()}g",
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     modifier = Modifier.weight(1f),
                                                     textAlign = TextAlign.Right
                                                 )
                                                 Text(
-                                                    text = "${adjustedCarbs.toInt()}%",
+                                                    text = "${adjustedCarbs.toInt()}g",
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     modifier = Modifier.weight(1f),
                                                     textAlign = TextAlign.Right
                                                 )
                                                 Text(
-                                                    text = "${adjustedWater.toInt()}%",
+                                                    text = "${adjustedWater.toInt()}g",
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     modifier = Modifier.weight(1f),
                                                     textAlign = TextAlign.Right
@@ -423,10 +482,14 @@ fun FoodInputDialog(
                                 usageCount = food?.usageCount ?: 0
                             )
                         } else {
-                            // Create compound food (categories and tags will be inherited)
+                            // Create compound food - convert grams to percentages
+                            val totalGrams = selectedComponents.sumOf { it.grams.toDouble() }.toFloat()
+                            val componentsAsPercentages = selectedComponents.associate { component ->
+                                component.foodName to (component.grams / totalGrams * 100f)
+                            }
                             Food(
                                 name = name.trim(),
-                                components = selectedComponents.associate { it.foodName to it.percentage },
+                                components = componentsAsPercentages,
                                 usageCount = food?.usageCount ?: 0
                             )
                         }
@@ -439,9 +502,9 @@ fun FoodInputDialog(
 
                         if (success) {
                             onDismiss()
-                            showSnackbar("Food ${if (food == null) "added" else "updated"} successfully")
+                            showSnackbar(TranslationService.getString(if (food == null) "food_added_successfully" else "food_updated_successfully"))
                         } else {
-                            showSnackbar("Failed to ${if (food == null) "add" else "update"} food. Check inputs.")
+                            showSnackbar(TranslationService.getString(if (food == null) "failed_to_add_food" else "failed_to_update_food"))
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -450,7 +513,7 @@ fun FoodInputDialog(
                         (isCompoundFood && selectedComponents.isNotEmpty())
                     )
                 ) {
-                    Text(if (food == null) "Add" else "Update")
+                    Text(if (food == null) tr("add") else tr("update"))
                 }
             }
         }
@@ -461,16 +524,16 @@ fun FoodInputDialog(
 private fun CompoundFoodMacrosDisplay(
     selectedComponents: List<FoodComponent>
 ) {
-    // Calculate total macros from components
-    val totalPercentage by remember(selectedComponents) {
-        derivedStateOf { selectedComponents.sumOf { it.percentage.toDouble() }.toFloat() }
+    // Calculate total grams and macros from components
+    val totalGrams by remember(selectedComponents) {
+        derivedStateOf { selectedComponents.sumOf { it.grams.toDouble() }.toFloat() }
     }
 
     val totalProteins by remember(selectedComponents, Model.foods) {
         derivedStateOf {
             selectedComponents.sumOf { component ->
                 val macros = Model.getFoodMacros(component.foodName)
-                macros?.proteins?.toDouble()?.times(component.percentage / 100) ?: 0.0
+                macros?.proteins?.toDouble()?.times(component.grams / 100) ?: 0.0
             }.toFloat()
         }
     }
@@ -479,7 +542,7 @@ private fun CompoundFoodMacrosDisplay(
         derivedStateOf {
             selectedComponents.sumOf { component ->
                 val macros = Model.getFoodMacros(component.foodName)
-                macros?.fats?.toDouble()?.times(component.percentage / 100) ?: 0.0
+                macros?.fats?.toDouble()?.times(component.grams / 100) ?: 0.0
             }.toFloat()
         }
     }
@@ -488,7 +551,7 @@ private fun CompoundFoodMacrosDisplay(
         derivedStateOf {
             selectedComponents.sumOf { component ->
                 val macros = Model.getFoodMacros(component.foodName)
-                macros?.carbs?.toDouble()?.times(component.percentage / 100) ?: 0.0
+                macros?.carbs?.toDouble()?.times(component.grams / 100) ?: 0.0
             }.toFloat()
         }
     }
@@ -497,48 +560,52 @@ private fun CompoundFoodMacrosDisplay(
         derivedStateOf {
             selectedComponents.sumOf { component ->
                 val macros = Model.getFoodMacros(component.foodName)
-                macros?.waterMassPercentage?.toDouble()?.times(component.percentage / 100) ?: 0.0
+                macros?.waterMassPercentage?.toDouble()?.times(component.grams / 100) ?: 0.0
             }.toFloat()
         }
     }
+
+    // Calculate macros per 100g of final compound food
+    val proteinsPer100g = if (totalGrams > 0) totalProteins * 100 / totalGrams else 0f
+    val fatsPer100g = if (totalGrams > 0) totalFats * 100 / totalGrams else 0f
+    val carbsPer100g = if (totalGrams > 0) totalCarbs * 100 / totalGrams else 0f
+    val waterPer100g = if (totalGrams > 0) totalWater * 100 / totalGrams else 0f
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = "Total macros:",
+            text = tr("total_per_100g"),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(2f)
         )
         Text(
-            text = "${totalPercentage.toInt()}%",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Right,
-            color = if (totalPercentage <= 100f) MaterialTheme.colorScheme.onSurface
-                   else MaterialTheme.colorScheme.error
-        )
-        Text(
-            text = "P:${totalProteins.toInt()}%",
+            text = "${totalGrams.toInt()}g",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Right
         )
         Text(
-            text = "F:${totalFats.toInt()}%",
+            text = "P:${proteinsPer100g.toInt()}g",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Right
         )
         Text(
-            text = "C:${totalCarbs.toInt()}%",
+            text = "F:${fatsPer100g.toInt()}g",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Right
         )
         Text(
-            text = "W:${totalWater.toInt()}%",
+            text = "C:${carbsPer100g.toInt()}g",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Right
+        )
+        Text(
+            text = "W:${waterPer100g.toInt()}g",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Right
@@ -565,20 +632,20 @@ private fun BasicFoodContent(
     onWaterChange: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Macronutrients (per 100g)", style = MaterialTheme.typography.bodyMedium)
+        Text(tr("macronutrients_per_100g"), style = MaterialTheme.typography.bodyMedium)
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = proteins,
                 onValueChange = onProteinsChange,
-                label = { Text("Protein", style = MaterialTheme.typography.bodyMedium) },
+                label = { Text(tr("protein"), style = MaterialTheme.typography.bodyMedium) },
                 modifier = Modifier.weight(1f),
                 textStyle = MaterialTheme.typography.bodyMedium
             )
             OutlinedTextField(
                 value = carbs,
                 onValueChange = onCarbsChange,
-                label = { Text("Carbs", style = MaterialTheme.typography.bodyMedium) },
+                label = { Text(tr("carbs"), style = MaterialTheme.typography.bodyMedium) },
                 modifier = Modifier.weight(1f),
                 textStyle = MaterialTheme.typography.bodyMedium
             )
@@ -588,14 +655,14 @@ private fun BasicFoodContent(
             OutlinedTextField(
                 value = fats,
                 onValueChange = onFatsChange,
-                label = { Text("Fats", style = MaterialTheme.typography.bodyMedium) },
+                label = { Text(tr("fats"), style = MaterialTheme.typography.bodyMedium) },
                 modifier = Modifier.weight(1f),
                 textStyle = MaterialTheme.typography.bodyMedium
             )
             OutlinedTextField(
                 value = water,
                 onValueChange = onWaterChange,
-                label = { Text("Water %", style = MaterialTheme.typography.bodyMedium) },
+                label = { Text(tr("water_percentage"), style = MaterialTheme.typography.bodyMedium) },
                 modifier = Modifier.weight(1f),
                 textStyle = MaterialTheme.typography.bodyMedium
             )

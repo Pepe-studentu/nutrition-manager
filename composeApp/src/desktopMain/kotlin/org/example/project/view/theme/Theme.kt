@@ -2,10 +2,9 @@ package org.example.project.view.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Typography
 import androidx.compose.material3.Shapes
-import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -71,14 +70,14 @@ val highContrastColorScheme = AppColors(
 val AccessibilityTypography = Typography(
     displayLarge = TextStyle(fontWeight = FontWeight.Bold, fontSize = 56.sp, lineHeight = 64.sp),
     displayMedium = TextStyle(fontWeight = FontWeight.Bold, fontSize = 48.sp, lineHeight = 56.sp),
-    headlineLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 42.sp, lineHeight = 50.sp),
-    headlineMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 36.sp, lineHeight = 44.sp),
+    headlineLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 40.sp, lineHeight = 50.sp),
+    headlineMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 32.sp, lineHeight = 44.sp),
     titleLarge = TextStyle(fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 40.sp),
-    titleMedium = TextStyle(fontWeight = FontWeight.Medium, fontSize = 28.sp, lineHeight = 36.sp),
-    bodyLarge = TextStyle(fontWeight = FontWeight.Normal, fontSize = 28.sp, lineHeight = 36.sp),
-    bodyMedium = TextStyle(fontWeight = FontWeight.Normal, fontSize = 24.sp, lineHeight = 32.sp),
-    labelLarge = TextStyle(fontWeight = FontWeight.Medium, fontSize = 24.sp, lineHeight = 32.sp),
-    labelMedium = TextStyle(fontWeight = FontWeight.Medium, fontSize = 20.sp, lineHeight = 28.sp)
+    titleMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 36.sp),
+    bodyLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 36.sp),
+    bodyMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 24.sp, lineHeight = 32.sp),
+    labelLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 24.sp, lineHeight = 32.sp),
+    labelMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 28.sp)
 )
 
 // More prominent corner radii
@@ -88,10 +87,9 @@ val AccessibilityShapes = Shapes(
     large = RoundedCornerShape(32.dp)
 )
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
-    MaterialExpressiveTheme(
+    MaterialTheme(
         colorScheme = highContrastColorScheme.toMaterialColorScheme(),
         typography = AccessibilityTypography,
         shapes = AccessibilityShapes,
@@ -138,18 +136,5 @@ private fun AppColors.toMaterialColorScheme() = ColorScheme(
     surfaceContainerHigh = background,
     surfaceContainerHighest = background,
     surfaceContainerLow = background,
-    surfaceContainerLowest = background,
-
-    primaryFixed = primary,
-    primaryFixedDim = primary,
-    onPrimaryFixed = onPrimary,
-    onPrimaryFixedVariant = onPrimary,
-    secondaryFixed = secondary,
-    secondaryFixedDim = secondary,
-    onSecondaryFixed = onSecondary,
-    onSecondaryFixedVariant = onSecondary,
-    tertiaryFixed = tertiary,
-    tertiaryFixedDim = tertiary,
-    onTertiaryFixed = onTertiary,
-    onTertiaryFixedVariant = onTertiary
+    surfaceContainerLowest = background
 )

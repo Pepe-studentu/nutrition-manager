@@ -12,16 +12,17 @@ import kotlinx.coroutines.launch
 import org.example.project.model.Food
 import org.example.project.model.Model
 import org.example.project.view.components.FoodTable
-import org.example.project.view.components.SortState
 import org.example.project.view.dialogs.FoodInputDialog
 import org.example.project.view.theme.AccessibilityTypography
+import org.example.project.service.tr
+import org.example.project.service.TranslationService
 import org.jetbrains.compose.resources.painterResource
 
 data class FoodsViewState(
     val foods: List<Food> = emptyList(),
     val searchQuery: String = "",
     val activeSortColumn: String? = null,
-    val sortStates: Map<String, SortState> = emptyMap(),
+    val sortAscending: Map<String, Boolean> = emptyMap(),
     val showInputDialog: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val selectedFood: Food? = null,
@@ -43,25 +44,30 @@ fun FoodsScreen() {
     fun updateFoods(
         searchQuery: String = viewState.searchQuery,
         sortColumn: String? = viewState.activeSortColumn,
-        sortStates: Map<String, SortState> = viewState.sortStates
+        sortAscending: Map<String, Boolean> = viewState.sortAscending
     ) {
-        val currentSortState = sortStates[sortColumn] ?: SortState.NONE
         val filtered = Model.filterFoods(searchQuery)
-        val sorted = if (sortColumn != null && currentSortState != SortState.NONE) {
+        val sorted = if (searchQuery.isBlank() && sortColumn != null) {
+            // Only allow column sorting when not searching
+            val ascending = sortAscending[sortColumn] ?: true
             Model.sortFoods(
                 foods = filtered,
                 column = sortColumn,
-                ascending = currentSortState == SortState.ASCENDING
+                ascending = ascending
             )
+        } else if (searchQuery.isBlank()) {
+            // Default alphabetical sort when no search and no column sort
+            filtered.sortedBy { it.name }
         } else {
-            Model.sortFoods(foods = filtered) // Default usage sort
+            // Use relevance sorting when searching (already sorted by Model.filterFoods)
+            filtered
         }
         
         viewState = viewState.copy(
             foods = sorted,
             searchQuery = searchQuery,
-            activeSortColumn = sortColumn,
-            sortStates = sortStates
+            activeSortColumn = if (searchQuery.isNotBlank()) null else sortColumn,
+            sortAscending = sortAscending
         )
     }
     
@@ -117,12 +123,12 @@ fun FoodsScreen() {
                         }
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                if (success) "Food deleted"
-                                else "Cannot delete: Food used elsewhere"
+                                if (success) TranslationService.getString("food_deleted")
+                                else TranslationService.getString("cannot_delete_food_in_use")
                             )
                         }
                     }) {
-                        Text("Delete")
+                        Text(tr("delete"))
                     }
                 },
                 dismissButton = {
@@ -134,11 +140,11 @@ fun FoodsScreen() {
                             )
                         }
                     }) {
-                        Text("Cancel")
+                        Text(tr("cancel"))
                     }
                 },
-                title = { Text("Confirm Deletion") },
-                text = { Text("Are you sure you want to delete ${viewState.foodToDelete!!.name}?") }
+                title = { Text(tr("delete")) },
+                text = { Text(tr("confirm_delete_food")) }
             )
         }
 
@@ -148,7 +154,7 @@ fun FoodsScreen() {
                 onValueChange = { newQuery ->
                     updateFoods(searchQuery = newQuery)
                 },
-                label = { Text("Search Foods", style = AccessibilityTypography.bodyLarge) },
+                label = { Text(tr("search_foods"), style = AccessibilityTypography.bodyLarge) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -156,27 +162,40 @@ fun FoodsScreen() {
                 singleLine = true
             )
 
+            // Results count display (only visible when searching)
+            if (viewState.searchQuery.isNotBlank()) {
+                val exactMatches = viewState.foods.count { food ->
+                    food.name.lowercase().startsWith(viewState.searchQuery.lowercase())
+                }
+                if (exactMatches > 0) {
+                    Text(
+                        text = tr("results_found", exactMatches),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        style = AccessibilityTypography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             FoodTable(
                 foods = viewState.foods,
                 activeSortColumn = viewState.activeSortColumn,
-                sortStates = viewState.sortStates,
+                sortAscending = viewState.sortAscending,
+                searchActive = viewState.searchQuery.isNotBlank(),
                 onHeaderClick = { columnName ->
-                    val currentState = viewState.sortStates[columnName] ?: SortState.NONE
-                    val nextState = when (currentState) {
-                        SortState.NONE -> SortState.ASCENDING
-                        SortState.ASCENDING -> SortState.DESCENDING
-                        SortState.DESCENDING -> SortState.NONE
+                    // Only handle clicks when not searching
+                    if (viewState.searchQuery.isBlank()) {
+                        val currentAscending = viewState.sortAscending[columnName] ?: true
+                        val newAscending = !currentAscending
+                        
+                        val newSortAscending = viewState.sortAscending.toMutableMap()
+                        newSortAscending[columnName] = newAscending
+                        
+                        updateFoods(
+                            sortColumn = columnName,
+                            sortAscending = newSortAscending
+                        )
                     }
-                    
-                    val newSortStates = viewState.sortStates.toMutableMap()
-                    newSortStates[columnName] = nextState
-                    
-                    val newActiveSortColumn = if (nextState == SortState.NONE) null else columnName
-                    
-                    updateFoods(
-                        sortColumn = newActiveSortColumn,
-                        sortStates = newSortStates
-                    )
                 },
                 onEditClick = { food ->
                     updateViewState { 
@@ -207,7 +226,7 @@ fun FoodsScreen() {
             },
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
         ) {
-            Icon(painterResource(Res.drawable.add), contentDescription = "Add Food")
+            Icon(painterResource(Res.drawable.add), contentDescription = tr("add_food_button"))
         }
     }
 }

@@ -28,57 +28,83 @@ fun MyNavBar(
             .fillMaxHeight()
             .background(MaterialTheme.colorScheme.primary) // Distinct background
             .padding(vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(48.dp)
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Screen.entries.forEach { screen ->
-            var isClicked by remember { mutableStateOf(false) }
-            val scale by animateFloatAsState(
-                targetValue = if (isClicked) 1.2f else 1f,
-                label = "Icon Scale Animation"
-            )
-
-            Box(
-                modifier = Modifier
-                    .size(72.dp) // Large icon size
-                    .clip(AccessibilityShapes.medium)
-                    .clickable {
-                        isClicked = true
-                        onScreenSelected(screen)
-                    }
-                    .background(
-                        color = if (currentScreen == screen) {
-                            MaterialTheme.colorScheme.secondary
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        }
-                    )
-
-                    .scale(scale)
-            ) {
-                Icon(
-                    painter = painterResource(
-                        if (currentScreen == screen) screen.filledIcon else screen.icon
-                    ),
-                    contentDescription = screen.name,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .align(Alignment.Center),
-                    tint = if (currentScreen == screen) {
-                        MaterialTheme.colorScheme.onSecondary
-                    } else {
-                        MaterialTheme.colorScheme.onPrimary
-                    }
+        // Main navigation items (Foods, Menus)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(48.dp)
+        ) {
+            listOf(Screen.Foods, Screen.Menus).forEach { screen ->
+                NavBarItem(
+                    screen = screen,
+                    isSelected = currentScreen == screen,
+                    onScreenSelected = onScreenSelected
                 )
             }
+        }
 
-            // Reset animation after click
-            LaunchedEffect(isClicked) {
-                if (isClicked) {
-                    kotlinx.coroutines.delay(200) // Short animation duration
-                    isClicked = false
-                }
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Settings at the bottom
+        NavBarItem(
+            screen = Screen.Settings,
+            isSelected = currentScreen == Screen.Settings,
+            onScreenSelected = onScreenSelected
+        )
+    }
+}
+
+@Composable
+private fun NavBarItem(
+    screen: Screen,
+    isSelected: Boolean,
+    onScreenSelected: (Screen) -> Unit
+) {
+    var isClicked by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isClicked) 1.2f else 1f,
+        label = "Icon Scale Animation"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(72.dp) // Large icon size
+            .clip(AccessibilityShapes.medium)
+            .clickable {
+                isClicked = true
+                onScreenSelected(screen)
             }
+            .background(
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.secondary
+                } else {
+                    MaterialTheme.colorScheme.primary
+                }
+            )
+            .scale(scale)
+    ) {
+        Icon(
+            painter = painterResource(
+                if (isSelected) screen.filledIcon else screen.icon
+            ),
+            contentDescription = screen.name,
+            modifier = Modifier
+                .size(48.dp)
+                .align(Alignment.Center),
+            tint = if (isSelected) {
+                MaterialTheme.colorScheme.onSecondary
+            } else {
+                MaterialTheme.colorScheme.onPrimary
+            }
+        )
+    }
+
+    // Reset animation after click
+    LaunchedEffect(isClicked) {
+        if (isClicked) {
+            kotlinx.coroutines.delay(200) // Short animation duration
+            isClicked = false
         }
     }
 }

@@ -7,7 +7,21 @@
       "Bash(git add:*)",
       "Bash(git push:*)",
       "Bash(git grep:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "WebSearch",
+      "WebSearch",
+      "Bash(../gradlew build)",
+      "Bash(git diff:*)",
+      "Bash(git commit:*)",
+      "Read(//c/Users/Petru/NutritionApp/**)",
+      "Bash(../gradlew dependencies:*)",
+      "Bash(java:*)",
+      "Bash(../gradlew runWithJFRExceptions)",
+      "Bash(../gradlew clean:*)",
+      "Bash(../gradlew tasks)",
+      "Bash(../gradlew run)",
+      "Bash(timeout:*)",
+      "Bash(../gradlew --stop)"
     ],
     "deny": []
   }

@@ -12,6 +12,7 @@ import org.example.project.model.Screen
 import org.example.project.view.components.MyNavBar
 import org.example.project.view.screens.FoodsScreen
 import org.example.project.view.screens.MenusScreen
+import org.example.project.view.screens.SettingsScreen
 import org.example.project.view.theme.AppTheme
 @Composable
 fun App() {
@@ -36,6 +37,7 @@ fun App() {
                 when (Model.currentScreen) {
                     Screen.Foods -> FoodsScreen()
                     Screen.Menus -> MenusScreen()
+                    Screen.Settings -> SettingsScreen()
                 }
             }
         }

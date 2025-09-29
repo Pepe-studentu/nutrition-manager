@@ -18,9 +18,9 @@ import org.example.project.model.Food
 import org.example.project.model.Model
 import org.example.project.view.theme.AccessibilityTypography
 import org.example.project.view.theme.Black
+import org.example.project.service.tr
 import org.jetbrains.compose.resources.painterResource
 
-enum class SortState { NONE, ASCENDING, DESCENDING }
 
 
 @Composable
@@ -36,7 +36,7 @@ fun ShowFoodComponents(food: Food, indentLevel: Int) {
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
             ) {
                 Text(
-                    text = "${percentage}% $componentName",
+                    text = "${"%.1f".format(percentage)}% $componentName",
                     modifier = Modifier.weight(2.5f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -61,7 +61,7 @@ fun ShowFoodComponents(food: Food, indentLevel: Int) {
 fun SortableHeaderCell(
     text: String,
     isActive: Boolean,
-    sortState: SortState,
+    ascending: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -73,28 +73,28 @@ fun SortableHeaderCell(
     ) {
         Text(
             text = text,
-            style = AccessibilityTypography.headlineLarge,
+            style = AccessibilityTypography.headlineMedium,
             color = Black,
             modifier = Modifier.weight(1f)
         )
         if (isActive) {
-            when (sortState) {
-                SortState.ASCENDING -> Icon(
+            if (ascending) {
+                Icon(
                     painter = painterResource(Res.drawable.arrow_drop_up_24px),
-                    contentDescription = "Ascending",
-                    modifier = Modifier.size(16.dp),
+                    contentDescription = tr("ascending"),
+                    modifier = Modifier.size(28.dp),
                     tint = Black
                 )
-                SortState.DESCENDING -> Icon(
+            } else {
+                Icon(
                     painter = painterResource(Res.drawable.arrow_drop_down_24px),
-                    contentDescription = "Descending", 
-                    modifier = Modifier.size(16.dp),
+                    contentDescription = tr("descending"), 
+                    modifier = Modifier.size(28.dp),
                     tint = Black
                 )
-                SortState.NONE -> Spacer(modifier = Modifier.size(16.dp))
             }
         } else {
-            Spacer(modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.size(28.dp))
         }
     }
 }
@@ -102,8 +102,9 @@ fun SortableHeaderCell(
 @Composable
 fun FoodsHeader(
     activeSortColumn: String?,
-    sortStates: Map<String, SortState>,
-    onHeaderClick: (String) -> Unit
+    sortAscending: Map<String, Boolean>,
+    onHeaderClick: (String) -> Unit,
+    searchActive: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -112,45 +113,45 @@ fun FoodsHeader(
             .padding(vertical = 8.dp, horizontal = 16.dp)
     ) {
         SortableHeaderCell(
-            text = "Food",
-            isActive = activeSortColumn == "food",
-            sortState = sortStates["food"] ?: SortState.NONE,
+            text = tr("food"),
+            isActive = !searchActive && activeSortColumn == "food",
+            ascending = sortAscending["food"] ?: true,
             modifier = Modifier.weight(2.5f),
-            onClick = { onHeaderClick("food") }
+            onClick = { if (!searchActive) onHeaderClick("food") }
         )
         SortableHeaderCell(
-            text = "Protein",
-            isActive = activeSortColumn == "protein",
-            sortState = sortStates["protein"] ?: SortState.NONE,
+            text = tr("protein"),
+            isActive = !searchActive && activeSortColumn == "protein",
+            ascending = sortAscending["protein"] ?: true,
             modifier = Modifier.weight(1f),
-            onClick = { onHeaderClick("protein") }
+            onClick = { if (!searchActive) onHeaderClick("protein") }
         )
         SortableHeaderCell(
-            text = "Fat",
-            isActive = activeSortColumn == "fat",
-            sortState = sortStates["fat"] ?: SortState.NONE,
+            text = tr("fat"),
+            isActive = !searchActive && activeSortColumn == "fat",
+            ascending = sortAscending["fat"] ?: true,
             modifier = Modifier.weight(1f),
-            onClick = { onHeaderClick("fat") }
+            onClick = { if (!searchActive) onHeaderClick("fat") }
         )
         SortableHeaderCell(
-            text = "Carbs",
-            isActive = activeSortColumn == "carbs",
-            sortState = sortStates["carbs"] ?: SortState.NONE,
+            text = tr("carbs"),
+            isActive = !searchActive && activeSortColumn == "carbs",
+            ascending = sortAscending["carbs"] ?: true,
             modifier = Modifier.weight(1f),
-            onClick = { onHeaderClick("carbs") }
+            onClick = { if (!searchActive) onHeaderClick("carbs") }
         )
         Text(
-            text = "Water %",
+            text = tr("water_percentage"),
             modifier = Modifier.weight(1f).padding(4.dp),
-            style = AccessibilityTypography.headlineLarge,
+            style = AccessibilityTypography.headlineMedium,
             color = Black
         )
         SortableHeaderCell(
-            text = "Calories",
-            isActive = activeSortColumn == "calories",
-            sortState = sortStates["calories"] ?: SortState.NONE,
-            modifier = Modifier.weight(1f),
-            onClick = { onHeaderClick("calories") }
+            text = tr("calories"),
+            isActive = !searchActive && activeSortColumn == "calories",
+            ascending = sortAscending["calories"] ?: true,
+            modifier = Modifier.weight(1.1f),
+            onClick = { if (!searchActive) onHeaderClick("calories") }
         )
     }
     HorizontalDivider(thickness = 4.dp, color = MaterialTheme.colorScheme.onBackground)
@@ -183,32 +184,32 @@ fun FoodRow(
 
             if (macros != null) {
                 Text(
-                    text = macros.proteins.toString(),
+                    text = "%.1f".format(macros.proteins),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = macros.fats.toString(),
+                    text = "%.1f".format(macros.fats),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = macros.carbs.toString(),
+                    text = "%.1f".format(macros.carbs),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = macros.waterMassPercentage.toString(),
+                    text = "%.1f".format(macros.waterMassPercentage),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 val calories = macros.proteins * 4 + macros.carbs * 4 + macros.fats * 9
                 Text(
-                    text = calories.toString(),
+                    text = "%.1f".format(calories),
                     modifier = Modifier.weight(1f),
                     style = AccessibilityTypography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
@@ -238,11 +239,23 @@ fun FoodRow(
                 horizontalArrangement = Arrangement.Start
             ) {
                 Button(onClick = { onEditClick(food) }, modifier = Modifier.padding(end = 24.dp)) {
-                    Text("Edit")
+                    Text(tr("edit"))
                 }
                 Button(onClick = { onDeleteClick(food) }) {
-                    Text("Delete")
+                    Text(tr("delete"))
                 }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Text(text = tr("category")+": ")
+
+                food.categories.forEach { Text(it.displayName+ " ") }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(text = tr("tags_short")+": ")
+
+                food.tags.forEach { Text("$it ") }
             }
         }
     }
@@ -254,10 +267,11 @@ fun FoodRow(
 fun FoodTable(
     foods: List<Food>,
     activeSortColumn: String?,
-    sortStates: Map<String, SortState>,
+    sortAscending: Map<String, Boolean>,
     onHeaderClick: (String) -> Unit,
     onDeleteClick: (Food) -> Unit, 
-    onEditClick: (Food) -> Unit
+    onEditClick: (Food) -> Unit,
+    searchActive: Boolean = false
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -270,8 +284,9 @@ fun FoodTable(
         ) {
             FoodsHeader(
                 activeSortColumn = activeSortColumn,
-                sortStates = sortStates,
-                onHeaderClick = onHeaderClick
+                sortAscending = sortAscending,
+                onHeaderClick = onHeaderClick,
+                searchActive = searchActive
             )
             LazyColumn(
                 modifier = Modifier.fillMaxWidth()

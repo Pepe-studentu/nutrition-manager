@@ -7,14 +7,16 @@ import androidx.compose.runtime.mutableStateOf
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.coroutines.*
+import org.example.project.service.DataManager
 import java.io.File
 import java.util.UUID
 
 object Model {
-    // File storage for persistence
-    private val foodsFile = File("foods.json")
-    private val mealsFile = File("meals.json")
-    private val multiDayMenusFile = File("multi_day_menus.json")
+    // File storage for persistence - managed by DataManager
+    private var foodsFile = DataManager.foodsFile
+    private var mealsFile = DataManager.mealsFile
+    private var multiDayMenusFile = DataManager.multiDayMenusFile
+    private var settingsFile = DataManager.settingsFile
 
     // Reactive state for UI observation
     private val _foods = mutableStateListOf<Food>()
@@ -25,6 +27,9 @@ object Model {
 
     private val _multiDayMenus = mutableStateListOf<MultiDayMenu>()
     val multiDayMenus: List<MultiDayMenu> get() = _multiDayMenus.toList()
+
+    // Settings state
+    var settings by mutableStateOf(Settings())
 
     // Current screen state
     var currentScreen by mutableStateOf(Screen.Foods)
@@ -45,10 +50,20 @@ object Model {
         return _multiDayMenus.find { it.id == id }
     }
 
-    // Recursive macro calculation with caching
+    // Recursive macro calculation with caching and circular dependency detection
     fun getFoodMacros(foodName: String): FoodMacros? {
+        return getFoodMacros(foodName, mutableSetOf())
+    }
+
+    private fun getFoodMacros(foodName: String, visiting: MutableSet<String>): FoodMacros? {
         if (macroCache.containsKey(foodName)) {
             return macroCache[foodName]
+        }
+
+        // Detect circular dependency
+        if (visiting.contains(foodName)) {
+            // Circular dependency detected, return zero macros to break the cycle
+            return FoodMacros(0f, 0f, 0f, 0f)
         }
 
         val food = getFoodByName(foodName) ?: return null
@@ -61,6 +76,9 @@ object Model {
                 waterMassPercentage = food.waterMassPercentage ?: 0f
             )
         } else {
+            // Add current food to visiting set to detect cycles
+            visiting.add(foodName)
+            
             // Recursively calculate macros for compound foods
             var totalProteins = 0f
             var totalCarbs = 0f
@@ -68,7 +86,7 @@ object Model {
             var totalWater = 0f
 
             for ((componentName, percentage) in food.components) {
-                val componentMacros = getFoodMacros(componentName)
+                val componentMacros = getFoodMacros(componentName, visiting)
                 if (componentMacros != null) {
                     val factor = percentage / 100f
                     totalProteins += componentMacros.proteins * factor
@@ -78,6 +96,9 @@ object Model {
                 }
             }
 
+            // Remove current food from visiting set
+            visiting.remove(foodName)
+            
             FoodMacros(totalProteins, totalCarbs, totalFats, totalWater)
         }
 
@@ -90,6 +111,65 @@ object Model {
         macroCache.clear()
         // Also clear food category/tag caches
         _foods.forEach { it.clearCache() }
+    }
+
+    // Check for circular dependencies in compound food components
+    private fun hasCircularDependency(foodName: String, components: Map<String, Float>): Boolean {
+        return hasCircularDependency(foodName, components, mutableSetOf())
+    }
+
+    private fun hasCircularDependency(
+        foodName: String, 
+        components: Map<String, Float>,
+        visiting: MutableSet<String>
+    ): Boolean {
+        // Add current food to visiting set
+        visiting.add(foodName)
+
+        for (componentName in components.keys) {
+            // If component is the same as current food, it's self-reference (direct cycle)
+            if (componentName == foodName) {
+                return true
+            }
+            
+            // If component is already being visited, it's a cycle
+            if (visiting.contains(componentName)) {
+                return true
+            }
+
+            // Check if component creates indirect cycles
+            val componentFood = getFoodByName(componentName)
+            if (componentFood != null && componentFood.isCompoundFood) {
+                if (hasCircularDependency(componentName, componentFood.components, visiting)) {
+                    return true
+                }
+            }
+        }
+
+        // Remove current food from visiting set before returning
+        visiting.remove(foodName)
+        return false
+    }
+
+    // Test configuration methods - only for testing
+    fun setTestFilePaths(testFoodsFile: File, testMealsFile: File, testMultiDayMenusFile: File) {
+        foodsFile = testFoodsFile
+        mealsFile = testMealsFile
+        multiDayMenusFile = testMultiDayMenusFile
+    }
+    
+    fun clearAllData() {
+        _foods.clear()
+        _meals.clear()
+        _multiDayMenus.clear()
+        clearMacroCache()
+    }
+    
+    fun loadFromFiles() {
+        loadFoods()
+        loadMeals()
+        loadMultiDayMenus()
+        loadSettings()
     }
 
     // Persistence functions
@@ -148,13 +228,29 @@ object Model {
         }
     }
 
+    private fun parseSettings(): Settings {
+        return if (settingsFile.exists()) {
+            Json.decodeFromString(settingsFile.readText())
+        } else {
+            Settings() // Default settings
+        }
+    }
+
     private fun dumpMultiDayMenus(menus: List<MultiDayMenu>) {
         multiDayMenusFile.writeText(Json.encodeToString(menus))
+    }
+
+    private fun dumpSettings(settings: Settings) {
+        settingsFile.writeText(Json.encodeToString(settings))
     }
 
     fun loadMultiDayMenus() {
         _multiDayMenus.clear()
         _multiDayMenus.addAll(parseMultiDayMenus())
+    }
+
+    fun loadSettings() {
+        settings = parseSettings()
     }
 
     // Food CRUD operations
@@ -166,6 +262,11 @@ object Model {
         if (food.isCompoundFood) {
             if (food.components.keys.any { componentName -> getFoodByName(componentName) == null }) {
                 return false // Referenced food doesn't exist
+            }
+            
+            // Check for circular dependencies
+            if (hasCircularDependency(food.name, food.components)) {
+                return false // Circular dependency detected
             }
         }
 
@@ -192,6 +293,11 @@ object Model {
                 componentName != updatedFood.name && getFoodByName(componentName) == null 
             }) {
                 return false
+            }
+            
+            // Check for circular dependencies
+            if (hasCircularDependency(updatedFood.name, updatedFood.components)) {
+                return false // Circular dependency detected
             }
         }
 
@@ -262,6 +368,7 @@ object Model {
 
         _meals.add(newMeal)
         dumpMeals(_meals)
+        dumpFoods(_foods)
         return true
     }
 
@@ -289,6 +396,7 @@ object Model {
             foods = sizedFoods
         )
         dumpMeals(_meals)
+        dumpFoods(_foods)
         return true
     }
 
@@ -315,6 +423,7 @@ object Model {
         val removed = _meals.removeIf { it.id == mealId }
         if (removed) {
             dumpMeals(_meals)
+            dumpFoods(_foods)
         }
         return removed
     }
@@ -408,8 +517,8 @@ object Model {
     // Search functions with relevance scoring
     fun filterFoods(query: String, foods: List<Food> = _foods): List<Food> {
         return if (query.isBlank()) {
-            // Default sort by usage when no search query
-            foods.sortedByDescending { it.usageCount }
+            // Return all foods without any sorting (let caller decide sorting)
+            foods
         } else {
             // Calculate relevance scores and sort by relevance
             foods.mapNotNull { food ->
@@ -463,10 +572,7 @@ object Model {
                 score += 5
             }
         }
-        
-        // Usage count bonus (small boost for frequently used foods)
-        score += food.usageCount
-        
+
         return score
     }
 
@@ -515,5 +621,11 @@ object Model {
         } else {
             foods.sortedWith(comparator.reversed())
         }
+    }
+
+    // Settings operations
+    fun updateSettings(newSettings: Settings) {
+        settings = newSettings
+        dumpSettings(settings)
     }
 }

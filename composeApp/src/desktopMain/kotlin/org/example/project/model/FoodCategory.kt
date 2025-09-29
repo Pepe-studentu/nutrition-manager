@@ -4,13 +4,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class FoodCategory(val displayName: String) {
-    DAIRY("Dairy"),
-    MEAT_FISH("Meat & Fish"),
-    EGGS("Eggs"),
-    VEGGIES("Vegetables"),
-    CEREALS_LEGUMES("Cereals & Legumes"),
-    SUGARS("Sugars"),
-    FATS("Fats"),
-    DRINKS("Drinks"),
-    NUTS("Nuts")
+    DAIRY("Lactate"),
+    MEAT_FISH("Carne & Peste"),
+    EGGS("Oua"),
+    VEGGIES("Legume & Fructe"),
+    CEREALS_LEGUMES("Cereale & leguminoase"),
+    SUGARS("Dulciuri"),
+    FATS("Grasimi"),
+    DRINKS("Bauturi"),
+    NUTS("Nuci")
 }

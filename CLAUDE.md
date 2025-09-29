@@ -6,9 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 
 ## Project Overview
-
 This is a Kotlin Multiplatform Desktop application built with Compose Multiplatform. It's a nutrition/meal planning application that allows users to manage foods, meals, and multi-day menus with nutritional calculations.
 The user is a nutrition professional who will use the app to speed up their workflow.
+
+### Target User & Workflow
+- **Primary User**: Nutrition professional (dietician, nutritionist)
+- **Main Goal**: Speed up client meal planning workflow
+- **Key Activities**: Create food database, design meals, plan multi-day menus, generate professional PDFs for clients
 
 ## Build and Development Commands
 
@@ -36,28 +40,126 @@ The user is a nutrition professional who will use the app to speed up their work
 - **View Layer**: Compose UI components organized by screen functionality
 - **Data Persistence**: JSON file-based storage for foods, meals, and multi-day menus
 
-### Key Components
+## Detailed Architecture Analysis
 
-#### Model (`src/desktopMain/kotlin/org/example/project/model/`)
-- `Model.kt` - Central singleton managing all application state and data operations
-- `Food.kt` - Core food entity supporting both basic foods (with direct macros) and compound foods (composed of other foods)
-- `FoodCategory.kt` - Enumeration of food categories (Dairy, Meat & Fish, Eggs, etc.)
-- `FoodMacros.kt` - Data class for nutritional macro information (proteins, carbs, fats, water)
-- `SizedFood.kt` - Bridge entity linking foods to meals with specific gram quantities
-- `Meal.kt` - Meal entity composed of multiple sized foods with calculated nutritional totals
-- `DailyMenu.kt` - Daily menu with 5 meal slots (breakfast, snack1, lunch, snack2, dinner)
-- `MultiDayMenu.kt` - Multi-day menu plan containing multiple daily menus with average calculations
-- `Screen.kt` - Navigation enumeration with icons (Foods, Menus)
+### Data Model Layer (`src/desktopMain/kotlin/org/example/project/model/`)
 
-#### View Layer (`src/desktopMain/kotlin/org/example/project/view/`)
-- `App.kt` - Main application layout with navigation bar and content area
-- `components/MyNavBar.kt` - Left sidebar navigation component
-- `components/FoodTable.kt` - Reusable table component for food display
-- `screens/FoodsScreen.kt` - Food management interface
-- `screens/MenusScreen.kt` - Menu management interface
-- `dialogs/FoodInputDialog.kt` - Dialog for adding/editing foods
-- `dialogs/AddMealDialog.kt` - Dialog for creating meals
-- `theme/Theme.kt` - Application theming: always use fonts from MaterialTheme.typography
+#### Core Entities
+- **Model.kt** (519 lines) - The heart of the application
+  - Singleton pattern with reactive Compose state (`mutableStateListOf`, `mutableStateOf`)  
+  - Manages all CRUD operations with immediate JSON persistence
+  - Implements macro calculation caching with recursive resolution for compound foods
+  - Handles search/filtering with relevance scoring (exact match > prefix > contains)
+  - Synchronous sorting with pre-calculated macros to avoid repeated computation
+  - Usage count tracking for referential integrity (prevents deletion of used foods/meals)
+  - Current JSON files: `foods.json`, `meals.json`, `multi_day_menus.json` in composeApp/ directory
+
+- **Food.kt** (84 lines) - Supports two food types
+  - **Basic Foods**: Direct macro values (proteins, carbs, fats, waterMassPercentage)
+  - **Compound Foods**: Composed of other foods with percentage-based composition
+  - Effective categories/tags inheritance system for compound foods (inherits from components)
+  - Validation ensures macro values ≤100% total and non-negative
+  - Caching system for effective categories/tags (cleared when foods modified)
+  - Usage count for tracking references from meals/other foods
+
+- **FoodMacros.kt** - Nutritional data container (proteins, carbs, fats, water percentage)
+- **SizedFood.kt** - Bridge entity linking foods to meals with gram quantities
+- **Meal.kt** - Collection of sized foods with calculated totals and description
+- **DailyMenu.kt** - 5 meal slots (breakfast, snack1, lunch, snack2, dinner) with calculated nutritionals
+- **MultiDayMenu.kt** - Multi-day plan with averages calculation
+- **Screen.kt** - Navigation enum (Foods, Menus) with Material icons
+
+#### Search & Sorting Architecture
+Model.kt implements sophisticated search with relevance scoring:
+- **Exact name match**: 100 points
+- **Name prefix**: 50 points  
+- **Name contains**: 20 points
+- **Category/tag matches**: 30/25 points respectively
+- **Component matches**: 15/5 points
+- **Usage count bonus**: Added to all scores
+- **Default sort**: By usage count (descending) when no query
+- **Macro sort**: Pre-calculates all macros once to avoid repeated recursive calls
+
+### View Layer Architecture (`src/desktopMain/kotlin/org/example/project/view/`)
+
+#### Screen Architecture Pattern
+Both major screens follow a consistent ViewState pattern:
+
+**FoodsScreen.kt** (214 lines):
+- Uses `FoodsViewState` data class for centralized state management
+- Single `updateFoods()` function coordinates search/sort operations
+- Search triggers re-filtering through Model.filterFoods()
+- Sorting uses SortState enum (NONE, ASCENDING, DESCENDING) with 3-step cycle
+- Food table with sortable columns, edit/delete actions
+- Dialog state management for add/edit/delete operations
+- Snackbar feedback for user actions
+
+**MenusScreen.kt** (374 lines):
+- Uses `MenusViewState` data class with complex cell selection state
+- Global cell selection system: `Triple<String, Int, Int>` (menuId, dayIndex, mealIndex)
+- Floating toolbar appears at screen bottom when cell selected
+- Context-aware dialogs (add meal vs edit existing meal)
+- Menu creation/deletion with confirmation dialogs
+- PDF generation integration via MenuPrintService
+
+#### Component Organization
+- **FoodTable.kt**: Reusable sortable table with recursive compound food display
+- **MultiDayMenuCard.kt**: Expandable cards containing MenuGrid components
+- **MenuGrid.kt**: Complex grid layout for daily meal planning
+- **MyNavBar.kt**: Sidebar navigation with screen switching
+- **SortableHeaderCell.kt**: Reusable header with sort indicators
+
+#### Dialog System
+- **FoodInputDialog.kt**: Handles both adding new foods and editing existing ones
+- **AddMealDialog.kt**: Create/edit meals with food selection and quantities
+- **MenuDialogs.kt**: Multi-day menu creation dialogs
+- Consistent pattern: onDismiss + action callbacks, snackbar integration
+
+### Service Layer (`src/desktopMain/kotlin/org/example/project/service/`)
+
+#### MenuPrintService.kt (262 lines)
+- PDF generation using OpenHTMLToPDF library
+- HTML template system with fallback inline template
+- Landscape A4 format optimized for menu tables
+- XHTML compliance preprocessing
+- Automatic file naming with timestamp
+- Desktop integration (opens PDF with default viewer)
+- **Output location**: `~/NutritionApp/MenuPDFs/` (auto-created if doesn't exist)
+
+### Technology Stack & Dependencies
+- **Core**: Kotlin Multiplatform + Compose Multiplatform (Material 3)
+- **Serialization**: kotlinx.serialization for JSON persistence  
+- **PDF**: OpenHTMLToPDF (pdfbox + slf4j) for menu printing
+- **Coroutines**: kotlinx-coroutines-swing for async operations
+- **Testing**: JUnit + Kotlin test utilities with comprehensive test coverage
+
+### Key Architectural Decisions
+
+#### State Management Philosophy
+- **No ViewModels**: Direct Model observation in Composables
+- **Immediate persistence**: All changes saved to JSON immediately
+- **Reactive updates**: Compose state primitives for UI reactivity
+- **Centralized validation**: All business rules in Model layer
+
+#### Performance Optimizations
+- **Macro caching**: Prevents repeated recursive calculations
+- **Pre-calculated sorting**: Computes all macros once before sorting
+- **Usage-based default sorting**: Frequently used foods appear first
+- **Effective inheritance caching**: Categories/tags cached for compound foods
+
+#### Data Integrity System
+- **Referential integrity**: Cannot delete foods/meals that are in use
+- **Usage counting**: Tracks how many times foods are referenced
+- **Validation on mutations**: All create/update operations validated
+- **Orphan prevention**: Cleanup prevents orphaned meals when removed from menus
+
+### Current Technical Debt & Opportunities
+- **PDF output configuration**: Currently saves to `~/NutritionApp/MenuPDFs/` (could add user-configurable path)
+- **File organization**: Some large files (Model.kt, MenusScreen.kt) could be split
+- **Error handling**: Could be more granular for better user feedback  
+- **Testing coverage**: Good model coverage, could expand UI testing
+- **Internationalization**: Currently English-only
+- **Configuration**: Hard-coded paths and settings could be configurable
 
 ### Data Flow
 1. Application loads data from JSON files on startup (foods.json, meals.json, multi_day_menus.json)
