@@ -1,19 +1,16 @@
 [versions]
-# KOTLIN and COMPOSE must be aligned. 1.7.0-alpha02 is the latest for Kotlin 2.0.20+
 kotlin = "2.0.21"
 composeMultiplatform = "1.7.0-alpha02"
 
-# CORE LIBRARIES - Update to versions compatible with Kotlin 2.0
 kotlinx-coroutines = "1.8.1"
 kotlinx-serialization = "1.7.1"
 
-# ANDROIDX - Use stable version instead of alpha
 androidx-lifecycle = "2.8.4"
 
 # TESTING
 junit = "4.13.2"
 
-# (You can remove composeHotReload if it's unused)
+
 composeHotReload = "1.0.0-alpha11"
 
 [libraries]
