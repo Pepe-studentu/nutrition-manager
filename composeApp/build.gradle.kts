@@ -69,8 +69,19 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "org.example.project"
+            packageName = "NutritionApp"
             packageVersion = "1.0.0"
+
+            description = "Open source nutrition meal planning application"
+
+
+            windows {
+                dirChooser = true
+                perUserInstall = true
+                menuGroup = "NutritionApp"
+                upgradeUuid = "BF9CDA6A-1391-46C5-8EA5-57A86EFBD073"
+                iconFile.set(project.file("../thumbnail.png"))
+            }
         }
     }
 }

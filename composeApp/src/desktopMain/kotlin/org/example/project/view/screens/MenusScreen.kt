@@ -377,12 +377,16 @@ fun MenusScreen() {
         }
 
         FloatingActionButton(
-            onClick = { 
+            onClick = {
                 updateViewState { copy(showCreateMenuDialog = true) }
             },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(112.dp)
         ) {
-            Icon(painterResource(Res.drawable.add), contentDescription = tr("add_menu_button"))
+            Icon(
+                painterResource(Res.drawable.add),
+                contentDescription = tr("add_menu_button"),
+                modifier = Modifier.size(48.dp)
+            )
         }
     }
 }

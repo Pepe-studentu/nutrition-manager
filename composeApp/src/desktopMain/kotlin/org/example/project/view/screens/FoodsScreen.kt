@@ -221,12 +221,16 @@ fun FoodsScreen() {
         }
 
         FloatingActionButton(
-            onClick = { 
+            onClick = {
                 updateViewState { copy(showInputDialog = true) }
             },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(112.dp)
         ) {
-            Icon(painterResource(Res.drawable.add), contentDescription = tr("add_food_button"))
+            Icon(
+                painterResource(Res.drawable.add),
+                contentDescription = tr("add_food_button"),
+                modifier = Modifier.size(48.dp)
+            )
         }
     }
 }
