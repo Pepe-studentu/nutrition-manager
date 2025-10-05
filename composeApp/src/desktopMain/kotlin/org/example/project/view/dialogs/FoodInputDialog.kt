@@ -25,6 +25,7 @@ import org.example.project.model.FoodCategory
 import org.example.project.model.Model
 import org.example.project.service.tr
 import org.example.project.service.TranslationService
+import org.example.project.view.components.FocusableButton
 
 data class FoodComponent(
     val foodName: String,
@@ -428,7 +429,7 @@ fun FoodInputDialog(
                                         }
 
                                         Box(modifier = Modifier.weight(0.5f), contentAlignment = Alignment.Center) {
-                                            Button(
+                                            FocusableButton(
                                                 onClick = { selectedComponents.removeAt(index) },
                                                 modifier = Modifier.size(24.dp),
                                                 contentPadding = PaddingValues(0.dp),
@@ -461,7 +462,7 @@ fun FoodInputDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Add button (no cancel button as requested)
-                Button(
+                FocusableButton(
                     onClick = {
                         val newFood = if (!isCompoundFood) {
                             // Parse tags from semicolon-separated input

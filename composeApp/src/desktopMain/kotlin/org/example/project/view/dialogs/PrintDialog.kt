@@ -18,6 +18,7 @@ import org.example.project.model.MultiDayMenu
 import org.example.project.service.TemplateManager
 import org.example.project.service.SignatureManager
 import org.example.project.service.MenuPrintService
+import org.example.project.view.components.FocusableButton
 import org.example.project.view.theme.AccessibilityTypography
 import org.example.project.service.tr
 import org.example.project.service.TranslationService
@@ -117,7 +118,7 @@ fun PrintDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Button(
+                            FocusableButton(
                                 onClick = {
                                     scope.launch {
                                         isGeneratingTemplate = true
@@ -147,7 +148,7 @@ fun PrintDialog(
                                 }
                             }
 
-                            Button(
+                            FocusableButton(
                                 onClick = {
                                     scope.launch {
                                         try {
@@ -185,7 +186,7 @@ fun PrintDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(
+                    FocusableButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
@@ -196,7 +197,7 @@ fun PrintDialog(
                         Text(tr("cancel"))
                     }
 
-                    Button(
+                    FocusableButton(
                         onClick = {
                             scope.launch {
                                 isGeneratingPdf = true

@@ -24,6 +24,7 @@ import org.example.project.model.Model
 import org.example.project.model.SizedFood
 import org.example.project.service.tr
 import org.example.project.service.TranslationService
+import org.example.project.view.components.FocusableButton
 
 @Composable
 fun AddMealDialog(
@@ -346,7 +347,7 @@ fun AddMealDialog(
                                                 )
                                             }
                                             Box(modifier = Modifier.weight(0.5f), contentAlignment = Alignment.Center) {
-                                                Button(
+                                                FocusableButton(
                                                     onClick = { selectedFoods.remove(sizedFood) },
                                                     modifier = Modifier.size(24.dp),
                                                     contentPadding = PaddingValues(0.dp),
@@ -380,7 +381,7 @@ fun AddMealDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Add/Update button
-                Button(
+                FocusableButton(
                     onClick = {
                         val finalMealDescription = mealDescription.ifBlank { TranslationService.getString("none") }
                         if (isEdit) {
