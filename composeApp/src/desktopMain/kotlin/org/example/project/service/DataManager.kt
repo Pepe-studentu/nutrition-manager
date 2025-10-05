@@ -32,8 +32,10 @@ class DataManager {
         // User-editable files in main directory
         val allergensFile = File(nutritionAppDir, "allergens.txt")
 
-        // Resource path for initial foods data
+        // Resource paths for initial data
         private const val INITIAL_FOODS = "initial_foods.json"
+        private const val INITIAL_MENU_TEMPLATE = "menu_template.html"
+        private const val INITIAL_SIGNATURE_TEMPLATE = "signature_template.html"
 
         /**
          * Ensures user data directory exists and seeds initial data if needed.
@@ -43,6 +45,7 @@ class DataManager {
             ensureUserDataDirectoryExists()
             ensureNutritionAppDirectoryExists()
             seedInitialFoodsIfNeeded()
+            seedTemplateFilesIfNeeded()
             ensureAllergensFileExists()
         }
 
@@ -64,6 +67,29 @@ class DataManager {
             if (!foodsFile.exists()) {
                 println("First run detected - seeding initial foods...")
                 seedInitialFoodsData()
+            }
+        }
+
+        private fun seedTemplateFilesIfNeeded() {
+            val menuTemplateFile = File(nutritionAppDir, "menu_template.html")
+            val signatureTemplateFile = File(nutritionAppDir, "signature_template.html")
+
+            if (!menuTemplateFile.exists()) {
+                println("Seeding initial menu template...")
+                try {
+                    copyResourceToFile(INITIAL_MENU_TEMPLATE, menuTemplateFile)
+                } catch (e: Exception) {
+                    println("Warning: Could not seed menu template: ${e.message}")
+                }
+            }
+
+            if (!signatureTemplateFile.exists()) {
+                println("Seeding initial signature template...")
+                try {
+                    copyResourceToFile(INITIAL_SIGNATURE_TEMPLATE, signatureTemplateFile)
+                } catch (e: Exception) {
+                    println("Warning: Could not seed signature template: ${e.message}")
+                }
             }
         }
 

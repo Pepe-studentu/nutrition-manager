@@ -68,9 +68,9 @@ compose.desktop {
         mainClass = "org.example.project.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi)
             packageName = "NutritionApp"
-            packageVersion = "1.0.1"
+            packageVersion = "1.1.1"
 
             description = "Open source nutrition meal planning application"
 

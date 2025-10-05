@@ -116,12 +116,12 @@ fun SettingsScreen() {
                     modifier = Modifier.width(60.dp)
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.weight(0.4f))
 
                 Text(
                     text = "${(currentSettings.textSizeMultiplier * 100).toInt()}%",
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.width(80.dp)
+                    modifier = Modifier.width(120.dp)
                 )
             }
         }
