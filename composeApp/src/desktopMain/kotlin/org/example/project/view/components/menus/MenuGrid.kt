@@ -231,22 +231,22 @@ fun DailyTotalsCell(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "P: ${proteinPercent.toInt()}%",
+                    text = tr("protein")+": ${proteinPercent.toInt()}%",
                     style = AccessibilityTypography.labelMedium,
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "F: ${fatPercent.toInt()}%",
+                    text = tr("fat")+": ${fatPercent.toInt()}%",
                     style = AccessibilityTypography.labelMedium,
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "G: ${carbPercent.toInt()}%",
+                    text = tr("carbs")+": ${carbPercent.toInt()}%",
                     style = AccessibilityTypography.labelMedium,
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Cal: ${totalCalories.toInt()}",
+                    text = tr("calories")+": ${totalCalories.toInt()}",
                     style = AccessibilityTypography.labelMedium,
                     textAlign = TextAlign.Center
                 )

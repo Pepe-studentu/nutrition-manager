@@ -193,10 +193,10 @@ class MenuPrintService {
                     val fatPercent = if (totalCalories > 0) (dailyMenu.fats * 9) / totalCalories * 100 else 0f
                     val carbPercent = if (totalCalories > 0) (dailyMenu.carbs * 4) / totalCalories * 100 else 0f
                     
-                    content.append("P: ${proteinPercent.toInt()}%<br />")
-                    content.append("F: ${fatPercent.toInt()}%<br />")
-                    content.append("G: ${carbPercent.toInt()}%<br />")
-                    content.append("Cal: ${totalCalories.toInt()}")
+                    content.append("Proteine: ${proteinPercent.toInt()}%<br />")
+                    content.append("Lipide: ${fatPercent.toInt()}%<br />")
+                    content.append("Glucide: ${carbPercent.toInt()}%<br />")
+                    content.append("Calorii: ${totalCalories.toInt()}")
                 }
                 content.append("</td>")
                 
