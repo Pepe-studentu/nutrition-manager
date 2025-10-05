@@ -104,7 +104,7 @@ fun FoodInputDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.8f)
+                .fillMaxHeight(0.9f)
                 .onPreviewKeyEvent { keyEvent ->
                     if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Tab) {
                         if (!isCompoundFood) {

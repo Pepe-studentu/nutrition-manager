@@ -10,36 +10,49 @@ import androidx.compose.ui.unit.dp
 import org.example.project.model.Model
 import org.example.project.model.Screen
 import org.example.project.view.components.MyNavBar
+import org.example.project.view.components.SplashScreen
 import org.example.project.view.screens.FoodsScreen
 import org.example.project.view.screens.MenusScreen
 import org.example.project.view.screens.SettingsScreen
 import org.example.project.view.theme.AppTheme
+
 @Composable
 fun App() {
-    AppTheme(textSizeMultiplier = Model.settings.textSizeMultiplier) {
-        Row(Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.primary)) {
-            // Navigation bar on the left
-            MyNavBar(
-                currentScreen = Model.currentScreen,
-                onScreenSelected = { screen -> Model.currentScreen = screen }
-            )
+    var showSplash by remember { mutableStateOf(true) }
 
-            // Content area with rounded top-left corner
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 16.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.background,
-                        shape = RoundedCornerShape(topStart = 36.dp)
-                    )
-            ) {
-                when (Model.currentScreen) {
-                    Screen.Foods -> FoodsScreen()
-                    Screen.Menus -> MenusScreen()
-                    Screen.Settings -> SettingsScreen()
+    AppTheme(textSizeMultiplier = Model.settings.textSizeMultiplier) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Main UI (always rendered, underneath splash)
+            Row(Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.primary)) {
+                // Navigation bar on the left
+                MyNavBar(
+                    currentScreen = Model.currentScreen,
+                    onScreenSelected = { screen -> Model.currentScreen = screen }
+                )
+
+                // Content area with rounded top-left corner
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 16.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.background,
+                            shape = RoundedCornerShape(topStart = 36.dp)
+                        )
+                ) {
+                    when (Model.currentScreen) {
+                        Screen.Foods -> FoodsScreen()
+                        Screen.Menus -> MenusScreen()
+                        Screen.Settings -> SettingsScreen()
+                    }
                 }
             }
+
+            // Splash overlay (fades out to reveal UI underneath)
+            SplashScreen(
+                visible = showSplash,
+                onSplashFinished = { showSplash = false }
+            )
         }
     }
 }
