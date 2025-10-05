@@ -70,7 +70,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "NutritionApp"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.1"
 
             description = "Open source nutrition meal planning application"
 
@@ -80,7 +80,7 @@ compose.desktop {
                 perUserInstall = true
                 menuGroup = "NutritionApp"
                 upgradeUuid = "BF9CDA6A-1391-46C5-8EA5-57A86EFBD073"
-                iconFile.set(project.file("../thumbnail.png"))
+                iconFile.set(project.file("../thumbnail.ico"))
             }
         }
     }
