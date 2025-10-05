@@ -1,7 +1,13 @@
 package org.example.project
 
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
 import org.example.project.model.Model
 import org.example.project.service.DataManager
 import org.example.project.service.TranslationService
@@ -23,6 +29,16 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             title = "KotlinProjectTest",
+            state = rememberWindowState(placement = WindowPlacement.Fullscreen),
+            undecorated = true,
+            onKeyEvent = { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Escape) {
+                    exitApplication()
+                    true
+                } else {
+                    false
+                }
+            }
         ) {
             App()
         }
