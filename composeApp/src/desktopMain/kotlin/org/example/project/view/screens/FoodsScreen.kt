@@ -154,11 +154,11 @@ fun FoodsScreen() {
                 onValueChange = { newQuery ->
                     updateFoods(searchQuery = newQuery)
                 },
-                label = { Text(tr("search_foods"), style = AccessibilityTypography.bodyLarge) },
+                label = { Text(tr("search_foods"), style = MaterialTheme.typography.bodyLarge) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                textStyle = AccessibilityTypography.bodyLarge,
+                textStyle = MaterialTheme.typography.bodyLarge,
                 singleLine = true
             )
 
@@ -171,7 +171,7 @@ fun FoodsScreen() {
                     Text(
                         text = tr("results_found", exactMatches),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        style = AccessibilityTypography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

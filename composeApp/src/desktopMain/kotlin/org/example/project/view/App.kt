@@ -16,7 +16,7 @@ import org.example.project.view.screens.SettingsScreen
 import org.example.project.view.theme.AppTheme
 @Composable
 fun App() {
-    AppTheme {
+    AppTheme(textSizeMultiplier = Model.settings.textSizeMultiplier) {
         Row(Modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.primary)) {
             // Navigation bar on the left
             MyNavBar(

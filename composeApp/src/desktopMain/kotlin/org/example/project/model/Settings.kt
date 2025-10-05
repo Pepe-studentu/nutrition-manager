@@ -5,5 +5,6 @@ import org.example.project.service.Language
 
 @Serializable
 data class Settings(
-    val language: Language = Language.ENGLISH
+    val language: Language = Language.ENGLISH,
+    val textSizeMultiplier: Float = 1.0f
 )

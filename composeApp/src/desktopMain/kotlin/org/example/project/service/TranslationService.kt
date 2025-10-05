@@ -40,6 +40,7 @@ object TranslationService {
             "menus" to "Menus",
             "settings" to "Settings",
             "language" to "Language",
+            "text_size" to "Text Size",
 
             // Common actions
             "add" to "Add",
@@ -187,6 +188,7 @@ object TranslationService {
             "menus" to "Meniuri",
             "settings" to "Setări",
             "language" to "Limba",
+            "text_size" to "Dimensiunea textului",
 
             // Common actions
             "add" to "Adaugă",

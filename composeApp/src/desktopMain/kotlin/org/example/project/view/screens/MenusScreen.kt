@@ -134,11 +134,11 @@ fun MenusScreen() {
                 onValueChange = { newQuery ->
                     updateMenus(searchQuery = newQuery)
                 },
-                label = { Text(tr("search_menus"), style = AccessibilityTypography.bodyLarge) },
+                label = { Text(tr("search_menus"), style = MaterialTheme.typography.bodyLarge) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                textStyle = AccessibilityTypography.bodyLarge,
+                textStyle = MaterialTheme.typography.bodyLarge,
                 singleLine = true
             )
 

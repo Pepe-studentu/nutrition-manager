@@ -38,7 +38,7 @@ fun ShowFoodComponents(food: Food, indentLevel: Int) {
                 Text(
                     text = "${"%.1f".format(percentage)}% $componentName",
                     modifier = Modifier.weight(2.5f),
-                    style = AccessibilityTypography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 // Empty cells for component rows
@@ -73,7 +73,7 @@ fun SortableHeaderCell(
     ) {
         Text(
             text = text,
-            style = AccessibilityTypography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium,
             color = Black,
             modifier = Modifier.weight(1f)
         )
@@ -143,7 +143,7 @@ fun FoodsHeader(
         Text(
             text = tr("water_percentage"),
             modifier = Modifier.weight(1f).padding(4.dp),
-            style = AccessibilityTypography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium,
             color = Black
         )
         SortableHeaderCell(
@@ -178,7 +178,7 @@ fun FoodRow(
             Text(
                 text = food.name,
                 modifier = Modifier.weight(2.5f),
-                style = AccessibilityTypography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -186,32 +186,32 @@ fun FoodRow(
                 Text(
                     text = "%.1f".format(macros.proteins),
                     modifier = Modifier.weight(1f),
-                    style = AccessibilityTypography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "%.1f".format(macros.fats),
                     modifier = Modifier.weight(1f),
-                    style = AccessibilityTypography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "%.1f".format(macros.carbs),
                     modifier = Modifier.weight(1f),
-                    style = AccessibilityTypography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "%.1f".format(macros.waterMassPercentage),
                     modifier = Modifier.weight(1f),
-                    style = AccessibilityTypography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 val calories = macros.proteins * 4 + macros.carbs * 4 + macros.fats * 9
                 Text(
                     text = "%.1f".format(calories),
                     modifier = Modifier.weight(1f),
-                    style = AccessibilityTypography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             } else {
@@ -220,7 +220,7 @@ fun FoodRow(
                     Text(
                         text = "",
                         modifier = Modifier.weight(1f),
-                        style = AccessibilityTypography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
             }

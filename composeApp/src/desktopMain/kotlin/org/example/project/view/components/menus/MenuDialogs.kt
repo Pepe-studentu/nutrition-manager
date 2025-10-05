@@ -54,23 +54,23 @@ fun MultiDayMenuInputDialog(
             ) {
                 Text(
                     text = tr("create_multi_day_menu"),
-                    style = AccessibilityTypography.headlineSmall
+                    style = MaterialTheme.typography.headlineSmall
                 )
 
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text(tr("description"), style = AccessibilityTypography.bodyMedium) },
+                    label = { Text(tr("description"), style = MaterialTheme.typography.bodyMedium) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = AccessibilityTypography.bodyLarge
+                    textStyle = MaterialTheme.typography.bodyLarge
                 )
 
                 OutlinedTextField(
                     value = days,
                     onValueChange = { days = it },
-                    label = { Text(tr("number_of_days"), style = AccessibilityTypography.bodyMedium) },
+                    label = { Text(tr("number_of_days"), style = MaterialTheme.typography.bodyMedium) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = AccessibilityTypography.bodyLarge
+                    textStyle = MaterialTheme.typography.bodyLarge
                 )
 
                 Row(

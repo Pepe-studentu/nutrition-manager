@@ -59,7 +59,7 @@ fun MenuGrid(
                         ) {
                             Text(
                                 text = tr("day_number", dayIndex + 1),
-                                style = AccessibilityTypography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -80,7 +80,7 @@ fun MenuGrid(
                     ) {
                         Text(
                             text = mealNames[mealIndex],
-                            style = AccessibilityTypography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -125,7 +125,7 @@ fun MenuGrid(
                     ) {
                         Text(
                             text = tr("daily_total"),
-                            style = AccessibilityTypography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -179,7 +179,7 @@ fun MealEntryCell(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = tr("add_a_meal"),
-                    style = AccessibilityTypography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -193,7 +193,7 @@ fun MealEntryCell(
                 items(meal.foods) { sizedFood ->
                     Text(
                         text = "${sizedFood.grams.toInt()}g ${sizedFood.foodName}",
-                        style = AccessibilityTypography.labelMedium,
+                        style = MaterialTheme.typography.labelMedium,
                         maxLines = 1
                     )
                 }
@@ -216,7 +216,7 @@ fun DailyTotalsCell(
         if (dailyMenu == null) {
             Text(
                 text = tr("no_data"),
-                style = AccessibilityTypography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
@@ -232,22 +232,22 @@ fun DailyTotalsCell(
             ) {
                 Text(
                     text = tr("protein")+": ${proteinPercent.toInt()}%",
-                    style = AccessibilityTypography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = tr("fat")+": ${fatPercent.toInt()}%",
-                    style = AccessibilityTypography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = tr("carbs")+": ${carbPercent.toInt()}%",
-                    style = AccessibilityTypography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium,
                     textAlign = TextAlign.Center
                 )
                 Text(
                     text = tr("calories")+": ${totalCalories.toInt()}",
-                    style = AccessibilityTypography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium,
                     textAlign = TextAlign.Center
                 )
             }

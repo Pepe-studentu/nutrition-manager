@@ -14,7 +14,6 @@ import org.example.project.model.Settings
 import org.example.project.service.Language
 import org.example.project.service.TranslationService
 import org.example.project.service.tr
-import org.example.project.view.theme.AccessibilityTypography
 
 @Composable
 fun SettingsScreen() {
@@ -29,7 +28,7 @@ fun SettingsScreen() {
         // Settings header
         Text(
             text = tr("settings"),
-            style = AccessibilityTypography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium
         )
 
         HorizontalDivider(thickness = 2.dp)
@@ -40,7 +39,7 @@ fun SettingsScreen() {
         ) {
             Text(
                 text = tr("language"),
-                style = AccessibilityTypography.titleMedium
+                style = MaterialTheme.typography.titleMedium
             )
 
             Column(
@@ -71,10 +70,59 @@ fun SettingsScreen() {
                         )
                         Text(
                             text = language.displayName,
-                            style = AccessibilityTypography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
                 }
+            }
+        }
+
+        HorizontalDivider(thickness = 2.dp)
+
+        // Text Size Setting Section
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = tr("text_size"),
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "70%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.width(60.dp)
+                )
+
+                Slider(
+                    value = currentSettings.textSizeMultiplier,
+                    onValueChange = { newMultiplier ->
+                        val newSettings = currentSettings.copy(textSizeMultiplier = newMultiplier)
+                        currentSettings = newSettings
+                        Model.updateSettings(newSettings)
+                    },
+                    valueRange = 0.7f..1.3f,
+                    modifier = Modifier.weight(0.6f)
+                )
+
+                Text(
+                    text = "130%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.width(60.dp)
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Text(
+                    text = "${(currentSettings.textSizeMultiplier * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.width(80.dp)
+                )
             }
         }
 

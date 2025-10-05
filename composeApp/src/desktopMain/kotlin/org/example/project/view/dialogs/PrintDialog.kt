@@ -58,7 +58,7 @@ fun PrintDialog(
             ) {
                 Text(
                     text = tr("print_menu_title", menu.description),
-                    style = AccessibilityTypography.headlineMedium,
+                    style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -72,7 +72,7 @@ fun PrintDialog(
                 ) {
                     Text(
                         text = tr("include_signature"),
-                        style = AccessibilityTypography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     Switch(
                         checked = includeSignature,
@@ -84,7 +84,7 @@ fun PrintDialog(
 
                     Text(
                         text = tr("signature_file", signatureManager.getSignatureFilePath()),
-                        style = AccessibilityTypography.bodySmall,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 32.dp, bottom = 8.dp)
                     )
@@ -103,13 +103,13 @@ fun PrintDialog(
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = tr("template_css_customization"),
-                            style = AccessibilityTypography.titleMedium,
+                            style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         
                         Text(
                             text = tr("copy_paste_instruction"),
-                            style = AccessibilityTypography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )

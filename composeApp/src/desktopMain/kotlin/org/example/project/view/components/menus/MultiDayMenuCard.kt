@@ -40,11 +40,11 @@ fun MultiDayMenuCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = menu.description,
-                        style = AccessibilityTypography.headlineSmall
+                        style = MaterialTheme.typography.headlineSmall
                     )
                     Text(
                         text = "${menu.days} ${tr("days")}",
-                        style = AccessibilityTypography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

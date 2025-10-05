@@ -6,7 +6,6 @@ import org.example.project.model.Model
 import org.example.project.service.DataManager
 import org.example.project.service.TranslationService
 import org.example.project.view.App
-import org.example.project.view.theme.AppTheme
 
 fun main() {
     // Initialize user data directory and seed initial data if needed - BEFORE composable
@@ -25,7 +24,7 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "KotlinProjectTest",
         ) {
-            AppTheme { App() }
+            App()
         }
     }
 }

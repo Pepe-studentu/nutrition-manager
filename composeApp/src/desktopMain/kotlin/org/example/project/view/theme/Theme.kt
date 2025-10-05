@@ -6,6 +6,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -80,6 +81,22 @@ val AccessibilityTypography = Typography(
     labelMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 28.sp)
 )
 
+// Creates a scaled version of the typography based on the multiplier
+fun createScaledTypography(multiplier: Float): Typography {
+    return Typography(
+        displayLarge = TextStyle(fontWeight = FontWeight.Bold, fontSize = (56 * multiplier).sp, lineHeight = (64 * multiplier).sp),
+        displayMedium = TextStyle(fontWeight = FontWeight.Bold, fontSize = (48 * multiplier).sp, lineHeight = (56 * multiplier).sp),
+        headlineLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = (40 * multiplier).sp, lineHeight = (50 * multiplier).sp),
+        headlineMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = (32 * multiplier).sp, lineHeight = (44 * multiplier).sp),
+        titleLarge = TextStyle(fontWeight = FontWeight.Bold, fontSize = (32 * multiplier).sp, lineHeight = (40 * multiplier).sp),
+        titleMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = (28 * multiplier).sp, lineHeight = (36 * multiplier).sp),
+        bodyLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = (28 * multiplier).sp, lineHeight = (36 * multiplier).sp),
+        bodyMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = (24 * multiplier).sp, lineHeight = (32 * multiplier).sp),
+        labelLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = (24 * multiplier).sp, lineHeight = (32 * multiplier).sp),
+        labelMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = (20 * multiplier).sp, lineHeight = (28 * multiplier).sp)
+    )
+}
+
 // More prominent corner radii
 val AccessibilityShapes = Shapes(
     small = RoundedCornerShape(16.dp),
@@ -88,13 +105,18 @@ val AccessibilityShapes = Shapes(
 )
 
 @Composable
-fun AppTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = highContrastColorScheme.toMaterialColorScheme(),
-        typography = AccessibilityTypography,
-        shapes = AccessibilityShapes,
-        content = content
-    )
+fun AppTheme(
+    textSizeMultiplier: Float = 1.0f,
+    content: @Composable () -> Unit
+) {
+    key(textSizeMultiplier) {
+        MaterialTheme(
+            colorScheme = highContrastColorScheme.toMaterialColorScheme(),
+            typography = createScaledTypography(textSizeMultiplier),
+            shapes = AccessibilityShapes,
+            content = content
+        )
+    }
 }
 
 // Extended color mapping
